@@ -1,16 +1,32 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 import { PageHeader } from '@/components/PageHeader'
 import { TrashList } from './_components/TrashList'
 
-async function getDeletedArticles() {
+interface TrashArticleRaw {
+  id: string
+  title: string
+  slug: string
+  status: string
+  deleted_at: string | null
+  created_at: string
+  category: { name: string }[] | null
+  author: { full_name: string | null; display_name: string | null }[] | null
+}
+
+interface TrashArticleNormalized {
+  id: string
+  title: string
+  slug: string
+  status: string
+  deleted_at: string | null
+  created_at: string
+  category: { name?: string } | null
+  author: { full_name?: string; display_name?: string } | null
+}
+
+async function getDeletedArticles(): Promise<TrashArticleNormalized[]> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { getAll() { return cookieStore.getAll() }, setAll() {} } }
-    )
+    const supabase = await createClient()
     const { data } = await supabase
       .from('articles')
       .select(`
@@ -21,7 +37,28 @@ async function getDeletedArticles() {
       .not('deleted_at', 'is', null)
       .order('deleted_at', { ascending: false })
 
-    return data ?? []
+    const raw = (data ?? []) as TrashArticleRaw[]
+
+    return raw.map((a): TrashArticleNormalized => {
+      const categoryRaw = Array.isArray(a.category) ? (a.category[0] ?? null) : a.category
+      const authorRaw = Array.isArray(a.author) ? (a.author[0] ?? null) : a.author
+
+      return {
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        status: a.status,
+        deleted_at: a.deleted_at,
+        created_at: a.created_at,
+        category: categoryRaw ? { name: categoryRaw.name } : null,
+        author: authorRaw
+          ? {
+              full_name: authorRaw.full_name ?? undefined,
+              display_name: authorRaw.display_name ?? undefined,
+            }
+          : null,
+      }
+    })
   } catch {
     return []
   }
