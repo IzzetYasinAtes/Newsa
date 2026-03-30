@@ -2,6 +2,25 @@ import { type NextRequest } from 'next/server'
 import { createApiClient } from '@/lib/supabase'
 import { successResponse, errorResponse } from '@/lib/response'
 
+interface ArticleRow {
+  id: string
+  title: string
+  slug: string
+  summary: string | null
+  published_at: string | null
+  view_count: number
+  author_id: string
+  category: { id: string; name: string; slug: string } | null
+  cover_image: { file_url: string; alt_text: string | null } | null
+}
+
+interface ProfileRow {
+  id: string
+  full_name: string | null
+  display_name: string | null
+  avatar_url: string | null
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl
@@ -17,9 +36,8 @@ export async function GET(request: NextRequest) {
       .from('articles')
       .select(
         `
-        id, title, slug, summary, published_at, view_count,
+        id, title, slug, summary, published_at, view_count, author_id,
         category:categories!articles_category_id_fkey(id, name, slug),
-        author:profiles!articles_author_id_fkey(id, full_name, display_name, avatar_url),
         cover_image:media!articles_cover_image_id_fkey(file_url, alt_text)
       `,
         { count: 'exact' },
@@ -38,16 +56,40 @@ export async function GET(request: NextRequest) {
     const to = from + perPage - 1
     query = query.range(from, to)
 
-    const { data, error, count } = await query
+    const { data: rawData, error, count } = await query
 
     if (error) {
       return errorResponse('DB_ERROR', error.message, 500)
     }
 
+    const data = rawData as unknown as ArticleRow[]
+
+    // Fetch author profiles separately to avoid RLS permission issues on profiles table
+    const authorIds = [...new Set((data ?? []).map((a) => a.author_id).filter(Boolean))]
+    let authorsMap: Record<string, ProfileRow> = {}
+
+    if (authorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, display_name, avatar_url')
+        .in('id', authorIds)
+
+      if (profiles) {
+        for (const p of profiles as ProfileRow[]) {
+          authorsMap[p.id] = p
+        }
+      }
+    }
+
+    const articlesWithAuthors = (data ?? []).map((article) => ({
+      ...article,
+      author: article.author_id ? (authorsMap[article.author_id] ?? null) : null,
+    }))
+
     const total = count ?? 0
     const totalPages = Math.ceil(total / perPage)
 
-    return successResponse(data ?? [], { total, page, per_page: perPage, total_pages: totalPages }, {
+    return successResponse(articlesWithAuthors, { total, page, per_page: perPage, total_pages: totalPages }, {
       headers: { 'Cache-Control': 'public, s-maxage=60' },
     })
   } catch (err) {

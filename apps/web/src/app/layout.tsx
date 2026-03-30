@@ -15,6 +15,26 @@ export const metadata: Metadata = {
     template: '%s | Newsa',
   },
   description: 'Turkiye ve bolge odakli modern dijital haber platformu',
+  openGraph: {
+    title: 'Newsa - Haber Platformu',
+    description: 'Turkiye ve bolge odakli modern dijital haber platformu',
+    type: 'website',
+    locale: 'tr_TR',
+    siteName: 'Newsa',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Newsa - Haber Platformu',
+    description: 'Turkiye ve bolge odakli modern dijital haber platformu',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 }
 
 export default function RootLayout({
