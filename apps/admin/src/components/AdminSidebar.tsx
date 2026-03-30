@@ -14,6 +14,7 @@ const menuItems = [
   { href: '/etiketler', label: 'Etiketler', icon: '\u{1F3F7}\uFE0F' },
   { href: '/medya', label: 'Medya', icon: '\u{1F5BC}\uFE0F' },
   { href: '/kullanicilar', label: 'Kullanicilar', icon: '\u{1F465}', roles: ['admin'] },
+  { href: '/roller', label: 'Roller', icon: '\u{1F510}', roles: ['admin'] },
   { href: '/ayarlar', label: 'Ayarlar', icon: '\u2699\uFE0F', roles: ['admin'] },
 ]
 
