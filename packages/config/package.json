@@ -1,0 +1,9 @@
+{
+  "name": "@newsa/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./typescript/base": "./typescript/base.json",
+    "./eslint/base": "./eslint/base.js"
+  }
+}
