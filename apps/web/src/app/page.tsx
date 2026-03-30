@@ -1,6 +1,9 @@
 import { createServerClient } from '@newsa/supabase'
 import { ArticleCard } from '@/components/ArticleCard'
 
+// Revalidate every 60 seconds (ISR) — serves cached version for performance
+export const revalidate = 60
+
 async function getHomeData() {
   try {
     const supabase = await createServerClient()

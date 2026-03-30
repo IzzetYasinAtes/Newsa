@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatDate } from '@newsa/shared'
 
 interface ArticleCardProps {
@@ -25,7 +26,16 @@ export function ArticleCard({
     return (
       <Link href={href} className="group relative block overflow-hidden rounded-xl">
         <div className="aspect-[16/9] bg-muted">
-          {coverImageUrl && <img src={coverImageUrl} alt={coverImageAlt ?? title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />}
+          {coverImageUrl && (
+            <Image
+              src={coverImageUrl}
+              alt={coverImageAlt ?? title}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover transition-transform group-hover:scale-105"
+              priority
+            />
+          )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute bottom-0 p-6 text-white">
@@ -44,8 +54,16 @@ export function ArticleCard({
   if (variant === 'horizontal') {
     return (
       <Link href={href} className="group flex gap-4">
-        <div className="h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-          {coverImageUrl && <img src={coverImageUrl} alt={coverImageAlt ?? title} className="h-full w-full object-cover" />}
+        <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+          {coverImageUrl && (
+            <Image
+              src={coverImageUrl}
+              alt={coverImageAlt ?? title}
+              fill
+              sizes="128px"
+              className="object-cover"
+            />
+          )}
         </div>
         <div className="flex-1">
           <span className="text-xs font-medium text-primary">{categoryName}</span>
@@ -70,8 +88,16 @@ export function ArticleCard({
   // Standard card
   return (
     <Link href={href} className="group block overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md">
-      <div className="aspect-[16/10] overflow-hidden bg-muted">
-        {coverImageUrl && <img src={coverImageUrl} alt={coverImageAlt ?? title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />}
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+        {coverImageUrl && (
+          <Image
+            src={coverImageUrl}
+            alt={coverImageAlt ?? title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform group-hover:scale-105"
+          />
+        )}
       </div>
       <div className="p-4">
         <span className="text-xs font-medium text-primary">{categoryName}</span>

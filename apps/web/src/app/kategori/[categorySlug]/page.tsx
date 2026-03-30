@@ -4,6 +4,9 @@ import { ArticleCard } from '@/components/ArticleCard'
 import { Pagination } from '@/components/Pagination'
 import type { Metadata } from 'next'
 
+// Revalidate every 60 seconds (ISR)
+export const revalidate = 60
+
 interface CategoryRow {
   id: string
   name: string

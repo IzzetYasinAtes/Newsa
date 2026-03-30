@@ -32,13 +32,17 @@ export async function GET(
       return errorResponse('NOT_FOUND', 'Article not found', 404)
     }
 
-    // Fetch tags separately
+    // Fetch tags for this specific article via junction table
     const { data: tagRows } = await supabase
-      .from('tags')
-      .select('id, name, slug')
-      .order('name')
+      .from('article_tags')
+      .select('tag:tags!article_tags_tag_id_fkey(id, name, slug)')
+      .eq('article_id', (data as Record<string, unknown>).id as string)
 
-    const result = { ...(data as Record<string, unknown>), tags: tagRows ?? [] }
+    const tags = ((tagRows ?? []) as Array<{ tag: { id: string; name: string; slug: string } | null }>)
+      .map((r) => r.tag)
+      .filter(Boolean)
+
+    const result = { ...(data as Record<string, unknown>), tags }
 
     return successResponse(result, undefined, {
       headers: { 'Cache-Control': 'public, s-maxage=300' },
