@@ -8,6 +8,7 @@ import { Badge } from '@/components/Badge'
 import { TiptapEditor } from '@/components/TiptapEditor'
 import { generateSlug } from '@newsa/shared'
 import { saveRevision, getRevisionById } from '@/app/actions/revisions'
+import { softDeleteArticle } from '@/app/actions/articles'
 import { RevisionsPanel } from './RevisionsPanel'
 
 interface ArticleFormProps {
@@ -196,12 +197,10 @@ export function ArticleForm({ initialData, categories, tags, currentUserId }: Ar
   }
 
   async function handleDelete() {
-    if (!isEdit || !initialData?.id || !confirm('Bu haberi silmek istediğinize emin misiniz?')) return
+    if (!isEdit || !initialData?.id || !confirm('Bu haber çöp kutusuna taşınacak. Devam etmek istiyor musunuz?')) return
     setLoading(true)
     try {
-      const supabase = getSupabaseBrowserClient()
-      const { error: deleteError } = await supabase.from('articles').delete().eq('id', initialData.id)
-      if (deleteError) throw deleteError
+      await softDeleteArticle(initialData.id)
       router.push('/haberler')
       router.refresh()
     } catch (err) {

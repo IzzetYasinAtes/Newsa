@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { PageHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/Badge'
 import { formatDate } from '@newsa/shared'
+import { DeleteArticleButton } from './_components/DeleteArticleButton'
 
 const statusLabels: Record<string, { label: string; variant: 'success' | 'warning' | 'default' | 'secondary' }> = {
   draft: { label: 'Taslak', variant: 'secondary' },
@@ -30,6 +31,7 @@ async function getArticles(page: number) {
         category:categories!category_id(name),
         author:profiles!author_id(full_name, display_name)
       `, { count: 'exact' })
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(from, from + PER_PAGE - 1)
     return { articles: data ?? [], total: count ?? 0 }
@@ -65,11 +67,12 @@ export default async function ArticlesPage({
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Durum</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tarih</th>
               <th className="px-4 py-3 text-right font-medium text-muted-foreground">Okunma</th>
+              <th className="px-4 py-3 text-right font-medium text-muted-foreground">İşlem</th>
             </tr>
           </thead>
           <tbody>
             {articles.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Henüz haber yok</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Henüz haber yok</td></tr>
             ) : (
               articles.map((article) => {
                 const status = statusLabels[article.status] ?? statusLabels.draft
@@ -96,6 +99,9 @@ export default async function ArticlesPage({
                       {formatDate(article.published_at ?? article.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">{article.view_count}</td>
+                    <td className="px-4 py-3 text-right">
+                      <DeleteArticleButton articleId={article.id} />
+                    </td>
                   </tr>
                 )
               })

@@ -82,6 +82,7 @@ export interface Database {
           editor_notes: string | null
           created_at: string
           updated_at: string
+          deleted_at: string | null
         }
         Insert: Omit<Database['public']['Tables']['articles']['Row'], 'id' | 'view_count' | 'share_count' | 'created_at' | 'updated_at'> & { id?: string }
         Update: Partial<Database['public']['Tables']['articles']['Insert']>
