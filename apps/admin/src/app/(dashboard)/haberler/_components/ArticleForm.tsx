@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { FormField } from '@/components/FormField'
 import { Badge } from '@/components/Badge'
 import { TiptapEditor } from '@/components/TiptapEditor'
@@ -89,10 +89,7 @@ export function ArticleForm({ initialData, categories, tags, currentUserId }: Ar
     setError(null)
 
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const supabase = getSupabaseBrowserClient()
 
       const finalStatus = newStatus ?? status
 
@@ -157,10 +154,7 @@ export function ArticleForm({ initialData, categories, tags, currentUserId }: Ar
     if (!isEdit || !initialData?.id || !confirm('Bu haberi silmek istediğinize emin misiniz?')) return
     setLoading(true)
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const supabase = getSupabaseBrowserClient()
       const { error: deleteError } = await supabase.from('articles').delete().eq('id', initialData.id)
       if (deleteError) throw deleteError
       router.push('/haberler')

@@ -2,16 +2,10 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 import { TiptapEditor } from '@/components/TiptapEditor'
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
 
 function slugify(text: string) {
   return text
@@ -63,7 +57,7 @@ export default function YeniSayfaPage() {
       return
     }
     setSaving(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const { data, error } = await supabase.from('pages').insert({
       title: form.title,
       slug: form.slug,

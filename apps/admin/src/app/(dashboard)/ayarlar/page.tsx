@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 
 interface Setting {
@@ -11,12 +11,6 @@ interface Setting {
 
 type SettingsMap = Record<string, string>
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
 
 const SETTING_KEYS = [
   'site_name',
@@ -61,7 +55,7 @@ export default function AyarlarPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
+      const supabase = getSupabaseBrowserClient()
       const { data } = await supabase
         .from('settings')
         .select('key, value')
@@ -83,7 +77,7 @@ export default function AyarlarPage() {
 
   async function handleSave() {
     setSaving(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
 
     const upserts = SETTING_KEYS.map((key) => ({
       key,

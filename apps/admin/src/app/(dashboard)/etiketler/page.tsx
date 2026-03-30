@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useState, useEffect } from 'react'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 import { generateSlug } from '@newsa/shared'
 
@@ -19,23 +19,28 @@ export default function TagsPage() {
   const [editValue, setEditValue] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = getSupabaseBrowserClient()
 
-  const loadTags = useCallback(async () => {
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { data } = await supabase.from('tags').select('*').order('name')
+        setTags((data as Tag[]) ?? [])
+      } catch {
+        /* Supabase not configured yet */
+      }
+    }
+    loadData()
+  }, [supabase])
+
+  async function loadTags() {
     try {
       const { data } = await supabase.from('tags').select('*').order('name')
       setTags((data as Tag[]) ?? [])
     } catch {
       /* Supabase not configured yet */
     }
-  }, [supabase])
-
-  useEffect(() => {
-    loadTags()
-  }, [loadTags])
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()

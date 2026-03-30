@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 
 interface Notification {
@@ -13,12 +13,6 @@ interface Notification {
   notification_type: string | null
 }
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -38,7 +32,7 @@ export default function BildirimlerPage() {
 
   const loadNotifications = useCallback(async () => {
     setLoading(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
@@ -55,14 +49,14 @@ export default function BildirimlerPage() {
   useEffect(() => { loadNotifications() }, [loadNotifications])
 
   async function markAsRead(id: string) {
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await supabase.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id)
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n))
   }
 
   async function markAllAsRead() {
     setMarkingAll(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       await supabase

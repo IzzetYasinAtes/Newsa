@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useState, useEffect, useRef } from 'react'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 
 interface MediaItem {
@@ -30,12 +30,25 @@ export default function MediaPage() {
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = getSupabaseBrowserClient()
 
-  const loadMedia = useCallback(async () => {
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { data } = await supabase
+          .from('media')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50)
+        setItems((data as MediaItem[]) ?? [])
+      } catch {
+        /* Supabase not configured */
+      }
+    }
+    loadData()
+  }, [supabase])
+
+  async function loadMedia() {
     try {
       const { data } = await supabase
         .from('media')
@@ -46,11 +59,7 @@ export default function MediaPage() {
     } catch {
       /* Supabase not configured */
     }
-  }, [supabase])
-
-  useEffect(() => {
-    loadMedia()
-  }, [loadMedia])
+  }
 
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return

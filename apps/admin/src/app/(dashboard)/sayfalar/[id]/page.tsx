@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 import { TiptapEditor } from '@/components/TiptapEditor'
 
@@ -16,12 +16,6 @@ interface StaticPage {
   seo_description: string | null
 }
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
 
 function slugify(text: string) {
   return text
@@ -57,7 +51,7 @@ export default function EditSayfaPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
+      const supabase = getSupabaseBrowserClient()
       const { data } = await supabase.from('pages').select('*').eq('id', pageId).single()
       if (data) {
         const page = data as StaticPage
@@ -94,7 +88,7 @@ export default function EditSayfaPage() {
       return
     }
     setSaving(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const { error } = await supabase.from('pages').update({
       title: form.title,
       slug: form.slug,
@@ -118,7 +112,7 @@ export default function EditSayfaPage() {
   async function handleDelete() {
     if (!confirm('Bu sayfayı silmek istediğinizden emin misiniz?')) return
     setDeleting(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await supabase.from('pages').delete().eq('id', pageId)
     router.push('/sayfalar')
   }

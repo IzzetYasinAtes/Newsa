@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { useState, useEffect } from 'react'
 
 interface TopbarProps {
@@ -22,10 +22,7 @@ function NotificationBell() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const supabase = getSupabaseBrowserClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
@@ -74,10 +71,7 @@ export function AdminTopbar({ userName, userRole }: TopbarProps) {
   const router = useRouter()
 
   async function handleLogout() {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = getSupabaseBrowserClient()
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()

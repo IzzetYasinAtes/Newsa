@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 
 interface MenuItem {
@@ -22,12 +22,6 @@ interface Menu {
   location: string
 }
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
 
 const linkTypeOptions = [
   { value: 'internal', label: 'İç Bağlantı' },
@@ -61,7 +55,7 @@ export default function MenuDetailPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const [menuRes, itemsRes] = await Promise.all([
       supabase.from('menus').select('*').eq('id', menuId).single(),
       supabase.from('menu_items').select('*').eq('menu_id', menuId).order('sort_order'),
@@ -79,7 +73,7 @@ export default function MenuDetailPage() {
       return
     }
     setSaving(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order), 0)
     const { error } = await supabase.from('menu_items').insert({
       menu_id: menuId,
@@ -103,7 +97,7 @@ export default function MenuDetailPage() {
 
   async function deleteItem(id: string) {
     setDeleting(id)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await supabase.from('menu_items').delete().eq('id', id)
     setDeleting(null)
     await loadData()
@@ -111,7 +105,7 @@ export default function MenuDetailPage() {
 
   async function saveOrder() {
     setSaving(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await Promise.all(
       items.map((item, idx) =>
         supabase.from('menu_items').update({ sort_order: idx + 1 }).eq('id', item.id)

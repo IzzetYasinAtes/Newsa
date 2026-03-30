@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/Badge'
 
@@ -19,12 +19,6 @@ interface Article {
   published_at: string | null
 }
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '-'
@@ -45,7 +39,7 @@ function ArticleSearchModal({
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
     setLoading(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const { data } = await supabase
       .from('articles')
       .select('id, title, slug, status, is_headline, is_featured, is_breaking, headline_order, featured_order, breaking_expires_at, published_at')
@@ -102,7 +96,7 @@ function HeadlineSection({ articles, onRefresh }: { articles: Article[]; onRefre
   const [saving, setSaving] = useState<string | null>(null)
 
   async function addToHeadline(article: Article) {
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const maxOrder = articles.reduce((m, a) => Math.max(m, a.headline_order ?? 0), 0)
     await supabase
       .from('articles')
@@ -114,7 +108,7 @@ function HeadlineSection({ articles, onRefresh }: { articles: Article[]; onRefre
 
   async function removeFromHeadline(id: string) {
     setSaving(id)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await supabase.from('articles').update({ is_headline: false, headline_order: null }).eq('id', id)
     setSaving(null)
     onRefresh()
@@ -163,7 +157,7 @@ function FeaturedSection({ articles, onRefresh }: { articles: Article[]; onRefre
   const [saving, setSaving] = useState<string | null>(null)
 
   async function addToFeatured(article: Article) {
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const maxOrder = articles.reduce((m, a) => Math.max(m, a.featured_order ?? 0), 0)
     await supabase
       .from('articles')
@@ -175,7 +169,7 @@ function FeaturedSection({ articles, onRefresh }: { articles: Article[]; onRefre
 
   async function removeFromFeatured(id: string) {
     setSaving(id)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await supabase.from('articles').update({ is_featured: false, featured_order: null }).eq('id', id)
     setSaving(null)
     onRefresh()
@@ -224,7 +218,7 @@ function BreakingSection({ articles, onRefresh }: { articles: Article[]; onRefre
   const [saving, setSaving] = useState<string | null>(null)
 
   async function addToBreaking(article: Article) {
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const expires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // 2 hours
     await supabase
       .from('articles')
@@ -236,7 +230,7 @@ function BreakingSection({ articles, onRefresh }: { articles: Article[]; onRefre
 
   async function extendBreaking(id: string) {
     setSaving(id)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const expires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
     await supabase.from('articles').update({ breaking_expires_at: expires }).eq('id', id)
     setSaving(null)
@@ -245,7 +239,7 @@ function BreakingSection({ articles, onRefresh }: { articles: Article[]; onRefre
 
   async function removeFromBreaking(id: string) {
     setSaving(id)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     await supabase.from('articles').update({ is_breaking: false, breaking_expires_at: null }).eq('id', id)
     setSaving(null)
     onRefresh()
@@ -314,7 +308,7 @@ export default function MansetPage() {
 
   const loadArticles = useCallback(async () => {
     setLoading(true)
-    const supabase = createClient()
+    const supabase = getSupabaseBrowserClient()
     const fields = 'id, title, slug, status, is_headline, is_featured, is_breaking, headline_order, featured_order, breaking_expires_at, published_at'
 
     const [headlines, featured, breaking] = await Promise.all([
