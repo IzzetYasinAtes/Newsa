@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/repos/Newsa/$HOME/**)",
+      "Bash(where npx:*)",
+      "Bash(npx --version)",
+      "Bash(where node:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh search:*)",
+      "WebSearch",
+      "WebFetch(domain:tailnews.tailwindtemplate.net)",
+      "WebFetch(domain:landdding.com)"
+    ]
+  }
+}
