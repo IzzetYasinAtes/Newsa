@@ -2,18 +2,23 @@ import Link from 'next/link'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { PageHeader } from '@/components/PageHeader'
-import { Badge } from '@/components/Badge'
-import { formatDate } from '@newsa/shared'
-import { DeleteArticleButton } from './_components/DeleteArticleButton'
-
-const statusLabels: Record<string, { label: string; variant: 'success' | 'warning' | 'default' | 'secondary' }> = {
-  draft: { label: 'Taslak', variant: 'secondary' },
-  review: { label: 'İncelemede', variant: 'warning' },
-  published: { label: 'Yayında', variant: 'success' },
-  archived: { label: 'Arşiv', variant: 'default' },
-}
+import { ArticlesTable } from './_components/ArticlesTable'
 
 const PER_PAGE = 20
+
+interface ArticleRow {
+  id: string
+  title: string
+  slug: string
+  status: string
+  is_featured: boolean
+  is_breaking: boolean
+  created_at: string
+  published_at: string | null
+  view_count: number
+  category: { name?: string } | null
+  author: { display_name?: string; full_name?: string } | null
+}
 
 async function getArticles(page: number) {
   try {
@@ -34,9 +39,9 @@ async function getArticles(page: number) {
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(from, from + PER_PAGE - 1)
-    return { articles: data ?? [], total: count ?? 0 }
+    return { articles: (data ?? []) as unknown as ArticleRow[], total: count ?? 0 }
   } catch {
-    return { articles: [], total: 0 }
+    return { articles: [] as ArticleRow[], total: 0 }
   }
 }
 
@@ -57,58 +62,8 @@ export default async function ArticlesPage({
         description={`${total} haber`}
         action={{ label: '+ Yeni Haber', href: '/haberler/yeni' }}
       />
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Başlık</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Kategori</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Yazar</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Durum</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tarih</th>
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Okunma</th>
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">İşlem</th>
-            </tr>
-          </thead>
-          <tbody>
-            {articles.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Henüz haber yok</td></tr>
-            ) : (
-              articles.map((article) => {
-                const status = statusLabels[article.status] ?? statusLabels.draft
-                const authorName = (article.author as { display_name?: string; full_name?: string })?.display_name
-                  ?? (article.author as { full_name?: string })?.full_name ?? '-'
-                const categoryName = (article.category as { name?: string })?.name ?? '-'
-                return (
-                  <tr key={article.id} className="border-b hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <Link href={`/haberler/${article.id}`} className="font-medium hover:text-primary">
-                        {article.title}
-                      </Link>
-                      <div className="mt-0.5 flex gap-1">
-                        {article.is_featured && <span className="text-xs text-yellow-600">Öne Çıkan</span>}
-                        {article.is_breaking && <span className="text-xs text-red-600">Son Dakika</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{categoryName}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{authorName}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={status.variant}>{status.label}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {formatDate(article.published_at ?? article.created_at)}
-                    </td>
-                    <td className="px-4 py-3 text-right">{article.view_count}</td>
-                    <td className="px-4 py-3 text-right">
-                      <DeleteArticleButton articleId={article.id} />
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+
+      <ArticlesTable articles={articles} />
 
       {/* Pagination */}
       {totalPages > 1 && (
