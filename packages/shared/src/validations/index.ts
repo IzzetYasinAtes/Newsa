@@ -84,6 +84,42 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(500).optional().nullable(),
 })
 
+// Ad Campaign schemas
+export const createCampaignSchema = z.object({
+  name: z.string().min(2, 'Kampanya adı en az 2 karakter').max(100),
+  advertiser_name: z.string().min(2, 'Reklamveren adı en az 2 karakter').max(100),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Geçerli bir tarih girin (YYYY-MM-DD)'),
+  end_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Geçerli bir tarih girin (YYYY-MM-DD)')
+    .optional()
+    .nullable(),
+  budget: z.number().positive('Bütçe pozitif olmalı').optional().nullable(),
+  status: z.enum(['draft', 'active', 'paused', 'completed']).default('draft'),
+})
+
+export const updateCampaignSchema = createCampaignSchema.partial()
+
+// Ad Creative schemas
+export const createCreativeSchema = z.object({
+  campaign_id: z.string().uuid('Geçerli bir kampanya seçilmeli'),
+  zone_id: z.string().uuid('Geçerli bir bölge seçilmeli'),
+  title: z.string().min(2, 'Başlık en az 2 karakter').max(200),
+  type: z.enum(['image', 'html', 'text']),
+  image_url: z.string().url('Geçerli bir URL girin').optional().nullable(),
+  html_content: z.string().max(10000, 'HTML içeriği çok uzun').optional().nullable(),
+  target_url: z.string().url('Geçerli bir hedef URL girin'),
+  is_active: z.boolean().default(true),
+})
+
+export const updateCreativeSchema = createCreativeSchema.partial()
+
+// Type exports from ad schemas
+export type CreateCampaignInput = z.infer<typeof createCampaignSchema>
+export type UpdateCampaignInput = z.infer<typeof updateCampaignSchema>
+export type CreateCreativeInput = z.infer<typeof createCreativeSchema>
+export type UpdateCreativeInput = z.infer<typeof updateCreativeSchema>
+
 // Settings schema
 export const updateSettingSchema = z.object({
   key: z.string(),

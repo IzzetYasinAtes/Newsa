@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { createApiClient } from '@/lib/supabase'
 import { successResponse, errorResponse } from '@/lib/response'
+import { rateLimit, getRateLimitHeaders, getClientIp } from '@/lib/rate-limit'
 
 interface ArticleRow {
   id: string
@@ -23,6 +24,14 @@ interface ProfileRow {
 
 export async function GET(request: NextRequest) {
   try {
+    const ip = getClientIp(request)
+    const { allowed, remaining, resetAt } = rateLimit(ip, 60)
+    const rateLimitHeaders = getRateLimitHeaders(remaining, resetAt)
+
+    if (!allowed) {
+      return errorResponse('RATE_LIMIT_EXCEEDED', 'Too many requests. Please try again later.', 429)
+    }
+
     const { searchParams } = request.nextUrl
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
     const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get('per_page') ?? '20', 10)))
@@ -90,7 +99,7 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(total / perPage)
 
     return successResponse(articlesWithAuthors, { total, page, per_page: perPage, total_pages: totalPages }, {
-      headers: { 'Cache-Control': 'public, s-maxage=60' },
+      headers: { 'Cache-Control': 'public, s-maxage=60', ...rateLimitHeaders },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error'

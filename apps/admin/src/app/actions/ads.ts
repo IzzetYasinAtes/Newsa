@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
+import { createCampaignSchema, updateCampaignSchema, createCreativeSchema, updateCreativeSchema } from '@newsa/shared'
 
 async function getAuthenticatedUser() {
   const supabase = await createClient()
@@ -27,6 +28,11 @@ export async function createCampaign(
   data: CreateCampaignData
 ): Promise<{ success: boolean; message: string; id?: string }> {
   try {
+    const parsed = createCampaignSchema.safeParse(data)
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+    }
+
     const { supabase, user } = await getAuthenticatedUser()
 
     const { data: campaign, error } = await supabase
@@ -57,11 +63,16 @@ export async function updateCampaign(
   data: Partial<CreateCampaignData>
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const parsed = updateCampaignSchema.safeParse(data)
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+    }
+
     const { supabase } = await getAuthenticatedUser()
 
     const { error } = await supabase
       .from('ad_campaigns')
-      .update(data)
+      .update(parsed.data)
       .eq('id', id)
 
     if (error) throw error
@@ -111,6 +122,11 @@ export async function createCreative(
   data: CreateCreativeData
 ): Promise<{ success: boolean; message: string; id?: string }> {
   try {
+    const parsed = createCreativeSchema.safeParse(data)
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+    }
+
     const { supabase } = await getAuthenticatedUser()
 
     const { data: creative, error } = await supabase
@@ -142,11 +158,16 @@ export async function updateCreative(
   data: Partial<CreateCreativeData>
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const parsed = updateCreativeSchema.safeParse(data)
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+    }
+
     const { supabase } = await getAuthenticatedUser()
 
     const { error } = await supabase
       .from('ad_creatives')
-      .update(data)
+      .update(parsed.data)
       .eq('id', id)
 
     if (error) throw error
