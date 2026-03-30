@@ -30,7 +30,7 @@ export async function createCampaign(
   try {
     const parsed = createCampaignSchema.safeParse(data)
     if (!parsed.success) {
-      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+      return { success: false, message: parsed.error.issues[0]?.message ?? 'Geçersiz veri' }
     }
 
     const { supabase, user } = await getAuthenticatedUser()
@@ -65,7 +65,7 @@ export async function updateCampaign(
   try {
     const parsed = updateCampaignSchema.safeParse(data)
     if (!parsed.success) {
-      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+      return { success: false, message: parsed.error.issues[0]?.message ?? 'Geçersiz veri' }
     }
 
     const { supabase } = await getAuthenticatedUser()
@@ -124,7 +124,7 @@ export async function createCreative(
   try {
     const parsed = createCreativeSchema.safeParse(data)
     if (!parsed.success) {
-      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+      return { success: false, message: parsed.error.issues[0]?.message ?? 'Geçersiz veri' }
     }
 
     const { supabase } = await getAuthenticatedUser()
@@ -160,7 +160,7 @@ export async function updateCreative(
   try {
     const parsed = updateCreativeSchema.safeParse(data)
     if (!parsed.success) {
-      return { success: false, message: parsed.error.errors[0]?.message ?? 'Geçersiz veri' }
+      return { success: false, message: parsed.error.issues[0]?.message ?? 'Geçersiz veri' }
     }
 
     const { supabase } = await getAuthenticatedUser()

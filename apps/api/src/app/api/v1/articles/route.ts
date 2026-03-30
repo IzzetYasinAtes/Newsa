@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch author profiles separately to avoid RLS permission issues on profiles table
     const authorIds = [...new Set((data ?? []).map((a) => a.author_id).filter(Boolean))]
-    let authorsMap: Record<string, ProfileRow> = {}
+    const authorsMap: Record<string, ProfileRow> = {}
 
     if (authorIds.length > 0) {
       const { data: profiles } = await supabase
