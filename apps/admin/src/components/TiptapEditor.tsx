@@ -8,13 +8,16 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Youtube from '@tiptap/extension-youtube'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface TiptapEditorProps {
   content: Record<string, unknown> | null
   onChange: (json: Record<string, unknown>, html: string) => void
   placeholder?: string
+  onAutoSave?: (content: Record<string, unknown>) => void
 }
+
+type AutoSaveStatus = 'idle' | 'saving' | 'saved'
 
 function MenuBar({ editor }: { editor: ReturnType<typeof useEditor> | null }) {
   if (!editor) return null
@@ -111,7 +114,11 @@ function MenuBar({ editor }: { editor: ReturnType<typeof useEditor> | null }) {
   )
 }
 
-export function TiptapEditor({ content, onChange, placeholder = 'Haber içeriğini yazın...' }: TiptapEditorProps) {
+export function TiptapEditor({ content, onChange, placeholder = 'Haber içeriğini yazın...', onAutoSave }: TiptapEditorProps) {
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle')
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -127,7 +134,25 @@ export function TiptapEditor({ content, onChange, placeholder = 'Haber içeriği
     ],
     content: content ?? undefined,
     onUpdate: ({ editor: ed }) => {
-      onChange(ed.getJSON() as Record<string, unknown>, ed.getHTML())
+      const json = ed.getJSON() as Record<string, unknown>
+      const html = ed.getHTML()
+      onChange(json, html)
+
+      // Auto-save debounce: 30 saniye
+      if (onAutoSave) {
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+        setAutoSaveStatus('idle')
+        autoSaveTimerRef.current = setTimeout(() => {
+          setAutoSaveStatus('saving')
+          onAutoSave(json)
+          // "Kaydedildi" durumu için kısa süre sonra idle'a dön
+          if (savedStatusTimerRef.current) clearTimeout(savedStatusTimerRef.current)
+          savedStatusTimerRef.current = setTimeout(() => {
+            setAutoSaveStatus('saved')
+            setTimeout(() => setAutoSaveStatus('idle'), 3000)
+          }, 500)
+        }, 30000)
+      }
     },
     editorProps: {
       attributes: {
@@ -146,9 +171,33 @@ export function TiptapEditor({ content, onChange, placeholder = 'Haber içeriği
     }
   }, [content, editor])
 
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+      if (savedStatusTimerRef.current) clearTimeout(savedStatusTimerRef.current)
+    }
+  }, [])
+
   return (
     <div className="rounded-md border bg-background">
-      <MenuBar editor={editor} />
+      <div className="flex items-center justify-between">
+        <MenuBar editor={editor} />
+        {onAutoSave && autoSaveStatus !== 'idle' && (
+          <div className="mr-2 flex-shrink-0">
+            {autoSaveStatus === 'saving' && (
+              <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700">
+                Kaydediliyor...
+              </span>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                Otomatik kaydedildi
+              </span>
+            )}
+          </div>
+        )}
+      </div>
       {editor && <EditorContent editor={editor} />}
     </div>
   )

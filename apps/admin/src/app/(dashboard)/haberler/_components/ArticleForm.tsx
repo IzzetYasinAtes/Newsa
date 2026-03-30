@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { FormField } from '@/components/FormField'
 import { Badge } from '@/components/Badge'
 import { TiptapEditor } from '@/components/TiptapEditor'
 import { generateSlug } from '@newsa/shared'
+import { saveRevision, getRevisionById } from '@/app/actions/revisions'
+import { RevisionsPanel } from './RevisionsPanel'
 
 interface ArticleFormProps {
   initialData?: {
@@ -84,6 +86,37 @@ export function ArticleForm({ initialData, categories, tags, currentUserId }: Ar
     )
   }
 
+  // Auto-save handler
+  const handleAutoSave = useCallback(
+    async (editorContent: Record<string, unknown>) => {
+      if (!isEdit || !initialData?.id) return
+      try {
+        await saveRevision(initialData.id, {
+          title,
+          content: editorContent,
+          excerpt: summary || null,
+          changeSummary: 'Otomatik kayıt',
+        })
+      } catch {
+        // Auto-save hatalarını sessizce yoksay
+      }
+    },
+    [isEdit, initialData?.id, title, summary]
+  )
+
+  // Revizyon geri yükleme
+  async function handleRestoreRevision(revisionId: string) {
+    try {
+      const rev = await getRevisionById(revisionId)
+      if (!rev) return
+      if (rev.title) setTitle(rev.title as string)
+      if (rev.content) setContent(rev.content as Record<string, unknown>)
+      if (rev.excerpt != null) setSummary((rev.excerpt as string) ?? '')
+    } catch {
+      setError('Revizyon geri yüklenemedi')
+    }
+  }
+
   async function handleSave(newStatus?: string) {
     setLoading(true)
     setError(null)
@@ -117,6 +150,18 @@ export function ArticleForm({ initialData, categories, tags, currentUserId }: Ar
       if (isEdit && initialData?.id) {
         const { error: updateError } = await supabase.from('articles').update(payload).eq('id', initialData.id)
         if (updateError) throw updateError
+
+        // Revizyon kaydet
+        try {
+          await saveRevision(initialData.id, {
+            title,
+            content,
+            excerpt: summary || null,
+            changeSummary: `Durum: ${finalStatus}`,
+          })
+        } catch {
+          // Revizyon kayıt hatalarını sessizce yoksay
+        }
 
         // Update tags
         await supabase.from('article_tags').delete().eq('article_id', initialData.id)
@@ -166,222 +211,233 @@ export function ArticleForm({ initialData, categories, tags, currentUserId }: Ar
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      {/* Main content - 2/3 */}
-      <div className="space-y-4 lg:col-span-2">
-        {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Main content - 2/3 */}
+        <div className="space-y-4 lg:col-span-2">
+          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
 
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-          <FormField label="Başlık" required>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              required
-              maxLength={200}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Haber başlığı..."
-            />
-          </FormField>
+          <div className="rounded-lg border bg-card p-6 space-y-4">
+            <FormField label="Başlık" required>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                required
+                maxLength={200}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Haber başlığı..."
+              />
+            </FormField>
 
-          <FormField label="Slug">
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </FormField>
+            <FormField label="Slug">
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </FormField>
 
-          <FormField label="Özet (Spot)">
-            <textarea
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              rows={3}
-              maxLength={500}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Haber özeti..."
-            />
-            <p className="text-xs text-muted-foreground">{summary.length}/500</p>
-          </FormField>
+            <FormField label="Özet (Spot)">
+              <textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                rows={3}
+                maxLength={500}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Haber özeti..."
+              />
+              <p className="text-xs text-muted-foreground">{summary.length}/500</p>
+            </FormField>
 
-          <FormField label="İçerik" required>
-            <TiptapEditor
-              content={content}
-              onChange={(json, html) => { setContent(json); setContentHtml(html) }}
-            />
-          </FormField>
+            <FormField label="İçerik" required>
+              <TiptapEditor
+                content={content}
+                onChange={(json, html) => { setContent(json); setContentHtml(html) }}
+                onAutoSave={isEdit ? handleAutoSave : undefined}
+              />
+            </FormField>
+          </div>
+
+          {/* SEO */}
+          <details className="rounded-lg border bg-card p-6">
+            <summary className="cursor-pointer font-medium">SEO Ayarları</summary>
+            <div className="mt-4 space-y-4">
+              <FormField label="SEO Başlık">
+                <input type="text" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} maxLength={70}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                <p className="text-xs text-muted-foreground">{seoTitle.length}/70</p>
+              </FormField>
+              <FormField label="SEO Açıklama">
+                <textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} maxLength={160} rows={2}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                <p className="text-xs text-muted-foreground">{seoDescription.length}/160</p>
+              </FormField>
+              <FormField label="Canonical URL">
+                <input type="url" value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://..." />
+              </FormField>
+            </div>
+          </details>
+
+          {/* Source */}
+          <details className="rounded-lg border bg-card p-6">
+            <summary className="cursor-pointer font-medium">Kaynak Bilgisi</summary>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <FormField label="Kaynak Adı">
+                <input type="text" value={sourceName} onChange={(e) => setSourceName(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              </FormField>
+              <FormField label="Kaynak URL">
+                <input type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              </FormField>
+            </div>
+          </details>
         </div>
 
-        {/* SEO */}
-        <details className="rounded-lg border bg-card p-6">
-          <summary className="cursor-pointer font-medium">SEO Ayarları</summary>
-          <div className="mt-4 space-y-4">
-            <FormField label="SEO Başlık">
-              <input type="text" value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} maxLength={70}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              <p className="text-xs text-muted-foreground">{seoTitle.length}/70</p>
-            </FormField>
-            <FormField label="SEO Açıklama">
-              <textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} maxLength={160} rows={2}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              <p className="text-xs text-muted-foreground">{seoDescription.length}/160</p>
-            </FormField>
-            <FormField label="Canonical URL">
-              <input type="url" value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://..." />
-            </FormField>
-          </div>
-        </details>
-
-        {/* Source */}
-        <details className="rounded-lg border bg-card p-6">
-          <summary className="cursor-pointer font-medium">Kaynak Bilgisi</summary>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <FormField label="Kaynak Adı">
-              <input type="text" value={sourceName} onChange={(e) => setSourceName(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-            </FormField>
-            <FormField label="Kaynak URL">
-              <input type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-            </FormField>
-          </div>
-        </details>
-      </div>
-
-      {/* Sidebar - 1/3 */}
-      <div className="space-y-4">
-        {/* Status & Actions */}
-        <div className="rounded-lg border bg-card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Durum</span>
-            <Badge variant={status === 'published' ? 'success' : status === 'review' ? 'warning' : 'secondary'}>
-              {status === 'draft' ? 'Taslak' : status === 'review' ? 'İncelemede' : status === 'published' ? 'Yayında' : 'Arşiv'}
-            </Badge>
-          </div>
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => handleSave('draft')}
-              disabled={loading}
-              className="w-full rounded-md border px-3 py-2 text-sm hover:bg-accent disabled:opacity-50"
-            >
-              {loading ? 'Kaydediliyor...' : 'Taslak Kaydet'}
-            </button>
-            {status !== 'published' && (
+        {/* Sidebar - 1/3 */}
+        <div className="space-y-4">
+          {/* Status & Actions */}
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Durum</span>
+              <Badge variant={status === 'published' ? 'success' : status === 'review' ? 'warning' : 'secondary'}>
+                {status === 'draft' ? 'Taslak' : status === 'review' ? 'İncelemede' : status === 'published' ? 'Yayında' : 'Arşiv'}
+              </Badge>
+            </div>
+            <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={() => handleSave('review')}
+                onClick={() => handleSave('draft')}
                 disabled={loading}
-                className="w-full rounded-md bg-yellow-500 px-3 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:opacity-50"
+                className="w-full rounded-md border px-3 py-2 text-sm hover:bg-accent disabled:opacity-50"
               >
-                İncelemeye Gönder
+                {loading ? 'Kaydediliyor...' : 'Taslak Kaydet'}
               </button>
-            )}
+              {status !== 'published' && (
+                <button
+                  type="button"
+                  onClick={() => handleSave('review')}
+                  disabled={loading}
+                  className="w-full rounded-md bg-yellow-500 px-3 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:opacity-50"
+                >
+                  İncelemeye Gönder
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleSave('published')}
+                disabled={loading}
+                className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                Yayınla
+              </button>
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className="rounded-lg border bg-card p-4">
+            <FormField label="Kategori" required>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                required
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Kategori seçin</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </FormField>
+          </div>
+
+          {/* Tags */}
+          <div className="rounded-lg border bg-card p-4">
+            <p className="mb-2 text-sm font-medium">Etiketler</p>
+            <div className="max-h-40 space-y-1 overflow-y-auto">
+              {tags.map((tag) => (
+                <label key={tag.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag.id)}
+                    onChange={() => toggleTag(tag.id)}
+                    className="rounded"
+                  />
+                  {tag.name}
+                </label>
+              ))}
+              {tags.length === 0 && <p className="text-xs text-muted-foreground">Etiket yok</p>}
+            </div>
+          </div>
+
+          {/* Flags */}
+          <div className="rounded-lg border bg-card p-4 space-y-2">
+            <p className="text-sm font-medium">Öne Çıkarma</p>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="rounded" />
+              Öne Çıkan
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={isHeadline} onChange={(e) => setIsHeadline(e.target.checked)} className="rounded" />
+              Manşet
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={isBreaking} onChange={(e) => setIsBreaking(e.target.checked)} className="rounded" />
+              Son Dakika
+            </label>
+          </div>
+
+          {/* Cover Image */}
+          <div className="rounded-lg border bg-card p-4">
+            <FormField label="Kapak Görseli Alt Metin">
+              <input
+                type="text"
+                value={coverImageAlt}
+                onChange={(e) => setCoverImageAlt(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Görsel açıklaması..."
+              />
+            </FormField>
+            <p className="mt-1 text-xs text-muted-foreground">Medya picker sonraki fazda eklenecek</p>
+          </div>
+
+          {/* Editor Notes */}
+          <div className="rounded-lg border bg-card p-4">
+            <FormField label="Editör Notları">
+              <textarea
+                value={editorNotes}
+                onChange={(e) => setEditorNotes(e.target.value)}
+                rows={3}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Sadece admin panelde görünür..."
+              />
+            </FormField>
+          </div>
+
+          {/* Delete */}
+          {isEdit && (
             <button
               type="button"
-              onClick={() => handleSave('published')}
+              onClick={handleDelete}
               disabled={loading}
-              className="w-full rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              className="w-full rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
-              Yayınla
+              Haberi Sil
             </button>
-          </div>
+          )}
         </div>
-
-        {/* Category */}
-        <div className="rounded-lg border bg-card p-4">
-          <FormField label="Kategori" required>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">Kategori seçin</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </FormField>
-        </div>
-
-        {/* Tags */}
-        <div className="rounded-lg border bg-card p-4">
-          <p className="mb-2 text-sm font-medium">Etiketler</p>
-          <div className="max-h-40 space-y-1 overflow-y-auto">
-            {tags.map((tag) => (
-              <label key={tag.id} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={selectedTags.includes(tag.id)}
-                  onChange={() => toggleTag(tag.id)}
-                  className="rounded"
-                />
-                {tag.name}
-              </label>
-            ))}
-            {tags.length === 0 && <p className="text-xs text-muted-foreground">Etiket yok</p>}
-          </div>
-        </div>
-
-        {/* Flags */}
-        <div className="rounded-lg border bg-card p-4 space-y-2">
-          <p className="text-sm font-medium">Öne Çıkarma</p>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="rounded" />
-            Öne Çıkan
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={isHeadline} onChange={(e) => setIsHeadline(e.target.checked)} className="rounded" />
-            Manşet
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={isBreaking} onChange={(e) => setIsBreaking(e.target.checked)} className="rounded" />
-            Son Dakika
-          </label>
-        </div>
-
-        {/* Cover Image */}
-        <div className="rounded-lg border bg-card p-4">
-          <FormField label="Kapak Görseli Alt Metin">
-            <input
-              type="text"
-              value={coverImageAlt}
-              onChange={(e) => setCoverImageAlt(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Görsel açıklaması..."
-            />
-          </FormField>
-          <p className="mt-1 text-xs text-muted-foreground">Medya picker sonraki fazda eklenecek</p>
-        </div>
-
-        {/* Editor Notes */}
-        <div className="rounded-lg border bg-card p-4">
-          <FormField label="Editör Notları">
-            <textarea
-              value={editorNotes}
-              onChange={(e) => setEditorNotes(e.target.value)}
-              rows={3}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Sadece admin panelde görünür..."
-            />
-          </FormField>
-        </div>
-
-        {/* Delete */}
-        {isEdit && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={loading}
-            className="w-full rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-          >
-            Haberi Sil
-          </button>
-        )}
       </div>
+
+      {/* Revizyon Geçmişi */}
+      {isEdit && initialData?.id && (
+        <RevisionsPanel
+          articleId={initialData.id}
+          onRestore={handleRestoreRevision}
+        />
+      )}
     </div>
   )
 }

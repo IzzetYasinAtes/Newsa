@@ -176,6 +176,38 @@ export interface Database {
           }
         ]
       }
+      article_revisions: {
+        Row: {
+          id: string
+          article_id: string
+          revision_number: number
+          title: string
+          content: Record<string, unknown> | null
+          excerpt: string | null
+          cover_image: string | null
+          created_by: string | null
+          created_at: string
+          change_summary: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['article_revisions']['Row'], 'id' | 'created_at'> & { id?: string }
+        Update: Partial<Database['public']['Tables']['article_revisions']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'article_revisions_article_id_fkey'
+            columns: ['article_id']
+            isOneToOne: false
+            referencedRelation: 'articles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'article_revisions_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       article_media: {
         Row: {
           article_id: string
@@ -222,6 +254,10 @@ export interface Database {
       increment_view_count: {
         Args: { article_id: string }
         Returns: void
+      }
+      get_next_revision_number: {
+        Args: { p_article_id: string }
+        Returns: number
       }
     }
     Enums: {
