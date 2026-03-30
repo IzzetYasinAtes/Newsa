@@ -16,7 +16,7 @@ interface TiptapEditorProps {
   placeholder?: string
 }
 
-function MenuBar({ editor }: { editor: ReturnType<typeof useEditor> }) {
+function MenuBar({ editor }: { editor: ReturnType<typeof useEditor> | null }) {
   if (!editor) return null
 
   const btnClass = (active: boolean) =>
@@ -113,6 +113,7 @@ function MenuBar({ editor }: { editor: ReturnType<typeof useEditor> }) {
 
 export function TiptapEditor({ content, onChange, placeholder = 'Haber içeriğini yazın...' }: TiptapEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3, 4] },
@@ -148,7 +149,7 @@ export function TiptapEditor({ content, onChange, placeholder = 'Haber içeriği
   return (
     <div className="rounded-md border bg-background">
       <MenuBar editor={editor} />
-      <EditorContent editor={editor} />
+      {editor && <EditorContent editor={editor} />}
     </div>
   )
 }

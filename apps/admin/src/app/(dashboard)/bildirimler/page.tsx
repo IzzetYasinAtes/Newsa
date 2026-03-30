@@ -10,7 +10,7 @@ interface Notification {
   body: string | null
   is_read: boolean
   created_at: string
-  notification_type: string | null
+  type: string | null
 }
 
 
@@ -38,7 +38,7 @@ export default function BildirimlerPage() {
 
     const { data } = await supabase
       .from('notifications')
-      .select('id, title, body, is_read, created_at, notification_type')
+      .select('id, title, body, is_read, created_at, type')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
