@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { restoreArticle, permanentDeleteArticle } from '@/app/actions/articles'
+import { bulkRestore } from '@/app/actions/bulk-articles'
 
 interface TrashArticle {
   id: string
@@ -39,16 +40,63 @@ function isOlderThan30Days(isoString: string): boolean {
 export function TrashList({ articles: initialArticles }: TrashListProps) {
   const [articles, setArticles] = useState<TrashArticle[]>(initialArticles)
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  const allSelected = articles.length > 0 && selectedIds.size === articles.length
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(articles.map((a) => a.id)))
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   function handleRestore(id: string) {
     startTransition(async () => {
       try {
         await restoreArticle(id)
         setArticles((prev) => prev.filter((a) => a.id !== id))
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Geri yükleme hatası')
+      }
+    })
+  }
+
+  function handleBulkRestore() {
+    const ids = Array.from(selectedIds)
+    if (!ids.length) return
+
+    startTransition(async () => {
+      try {
+        const result = await bulkRestore(ids)
+        if (!result.success) throw new Error(result.message)
+        setArticles((prev) => prev.filter((a) => !selectedIds.has(a.id)))
+        setSelectedIds(new Set())
+        setSuccessMsg(result.message)
+        setTimeout(() => setSuccessMsg(null), 3000)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Toplu geri yükleme hatası')
       }
     })
   }
@@ -65,6 +113,11 @@ export function TrashList({ articles: initialArticles }: TrashListProps) {
       try {
         await permanentDeleteArticle(id)
         setArticles((prev) => prev.filter((a) => a.id !== id))
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Kalıcı silme hatası')
       }
@@ -84,6 +137,43 @@ export function TrashList({ articles: initialArticles }: TrashListProps) {
       {error && (
         <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="ml-2 underline"
+          >
+            Kapat
+          </button>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950/30 dark:text-green-400">
+          {successMsg}
+        </div>
+      )}
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            {selectedIds.size} haber seçildi
+          </span>
+          <button
+            type="button"
+            onClick={handleBulkRestore}
+            disabled={isPending}
+            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+          >
+            Seçilenleri Geri Yükle
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto rounded-md border px-3 py-1.5 text-xs hover:bg-accent"
+          >
+            Seçimi Temizle
+          </button>
         </div>
       )}
 
@@ -120,6 +210,15 @@ export function TrashList({ articles: initialArticles }: TrashListProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
+              <th className="px-4 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  aria-label="Tümünü seç"
+                  className="h-4 w-4 rounded border-input"
+                />
+              </th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Başlık</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Kategori</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Yazar</th>
@@ -133,12 +232,28 @@ export function TrashList({ articles: initialArticles }: TrashListProps) {
               const authorName =
                 article.author?.display_name ?? article.author?.full_name ?? '-'
               const categoryName = article.category?.name ?? '-'
+              const isSelected = selectedIds.has(article.id)
 
               return (
                 <tr
                   key={article.id}
-                  className={`border-b ${isOld ? 'bg-red-50 dark:bg-red-950/20' : 'hover:bg-muted/30'}`}
+                  className={`border-b ${
+                    isSelected
+                      ? 'bg-blue-50 dark:bg-blue-950/20'
+                      : isOld
+                      ? 'bg-red-50 dark:bg-red-950/20'
+                      : 'hover:bg-muted/30'
+                  }`}
                 >
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(article.id)}
+                      aria-label={`${article.title} seç`}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`font-medium ${isOld ? 'text-red-700 dark:text-red-400' : ''}`}>
                       {article.title}
