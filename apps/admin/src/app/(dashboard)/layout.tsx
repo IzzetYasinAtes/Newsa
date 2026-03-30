@@ -18,16 +18,16 @@ async function getUser() {
       },
     }
   )
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .single()
 
-  return { user, profile }
+  return { user: session.user, profile }
 }
 
 export default async function DashboardLayout({

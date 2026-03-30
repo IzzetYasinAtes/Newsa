@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { PageHeader } from '@/components/PageHeader'
 import { generateSlug } from '@newsa/shared'
@@ -19,7 +19,8 @@ export default function TagsPage() {
   const [editValue, setEditValue] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const supabase = getSupabaseBrowserClient()
+  const supabaseRef = useRef(getSupabaseBrowserClient())
+  const supabase = supabaseRef.current
 
   useEffect(() => {
     async function loadData() {
@@ -31,7 +32,7 @@ export default function TagsPage() {
       }
     }
     loadData()
-  }, [supabase])
+  }, [])
 
   async function loadTags() {
     try {
