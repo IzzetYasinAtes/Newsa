@@ -23,7 +23,7 @@ async function getUser() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, full_name, display_name, role, avatar_url')
     .eq('id', session.user.id)
     .single()
 

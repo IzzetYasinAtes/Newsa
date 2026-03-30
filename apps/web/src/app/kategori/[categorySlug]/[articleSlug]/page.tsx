@@ -1,9 +1,13 @@
 import { createServerClient } from '@newsa/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatDate, getReadingTime } from '@newsa/shared'
 import type { Metadata } from 'next'
 import JsonLd from '@/components/JsonLd'
+
+// Revalidate every 5 minutes (ISR) — article content is relatively stable
+export const revalidate = 300
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -49,17 +53,19 @@ async function getArticle(slug: string) {
 
     if (!data) return null
 
-    // Fetch tags separately to avoid type resolution issues with junction tables
+    const article = data as unknown as ArticleDetail
+
+    // Fetch tags for this article via junction table
     const { data: tagRows } = await supabase
-      .from('tags')
-      .select('id, name, slug')
-      .order('name')
+      .from('article_tags')
+      .select('tag:tags!article_tags_tag_id_fkey(id, name, slug)')
+      .eq('article_id', (data as unknown as { id: string }).id)
 
-    // For now, return all tags. When Supabase is connected with proper schema,
-    // this will be filtered via article_tags junction table.
-    const tags = (tagRows ?? []) as unknown as TagItem[]
+    const tags = ((tagRows ?? [])
+      .map((r) => (r as unknown as { tag: TagItem | null }).tag)
+      .filter(Boolean)) as TagItem[]
 
-    return { article: data as unknown as ArticleDetail, tags }
+    return { article, tags }
   } catch {
     return null
   }
@@ -168,7 +174,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
       {/* Author & meta */}
       <div className="mt-4 flex items-center gap-3 border-b pb-4">
         {author?.avatar_url && (
-          <img src={author.avatar_url} alt={author.display_name ?? author.full_name} className="h-10 w-10 rounded-full object-cover" />
+          <Image src={author.avatar_url} alt={author.display_name ?? author.full_name} width={40} height={40} className="rounded-full object-cover" />
         )}
         <div>
           <p className="font-medium">{author?.display_name ?? author?.full_name}</p>
@@ -182,8 +188,15 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
 
       {/* Cover image */}
       {cover && (
-        <div className="mt-6 overflow-hidden rounded-xl">
-          <img src={cover.file_url} alt={cover.alt_text ?? article.title} className="w-full" />
+        <div className="relative mt-6 aspect-[16/9] overflow-hidden rounded-xl">
+          <Image
+            src={cover.file_url}
+            alt={cover.alt_text ?? article.title}
+            fill
+            sizes="(max-width: 896px) 100vw, 896px"
+            className="object-cover"
+            priority
+          />
         </div>
       )}
 
