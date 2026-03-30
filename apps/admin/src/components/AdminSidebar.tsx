@@ -21,6 +21,7 @@ const menuItems = [
   { href: '/roller', label: 'Roller', icon: '\u{1F510}', roles: ['admin'] },
   { href: '/denetim', label: 'Denetim Logları', icon: '\u{1F4CB}', roles: ['admin'] },
   { href: '/ayarlar', label: 'Ayarlar', icon: '\u2699\uFE0F', roles: ['admin'] },
+  { href: '/cop-kutusu', label: 'Çöp Kutusu', icon: '\u{1F5D1}\uFE0F', roles: ['admin', 'editor'] },
 ]
 
 export function AdminSidebar({ userRole }: SidebarProps) {
