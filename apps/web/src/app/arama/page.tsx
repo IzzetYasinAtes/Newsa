@@ -1,8 +1,7 @@
-'use client'
-
-import { useState, useCallback, type FormEvent } from 'react'
-import { createBrowserClient } from '@newsa/supabase/client/browser'
+import type { Metadata } from 'next'
+import { createServerClient } from '@newsa/supabase/client/server'
 import { ArticleCard } from '@/components/ArticleCard'
+import { SearchForm } from './_components/SearchForm'
 
 interface SearchResult {
   id: string
@@ -15,93 +14,95 @@ interface SearchResult {
   author: { full_name: string; display_name?: string } | null
 }
 
-export default function SearchPage() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [searched, setSearched] = useState(false)
-  const [loading, setLoading] = useState(false)
+interface SearchPageProps {
+  searchParams: Promise<{ q?: string }>
+}
 
-  const handleSearch = useCallback(async (e: FormEvent) => {
-    e.preventDefault()
-    const trimmed = query.trim()
-    if (!trimmed) return
+export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
+  const { q } = await searchParams
+  const title = q ? `"${q}" için arama sonuçları` : 'Haber Ara'
+  return {
+    title,
+    description: q
+      ? `${q} ile ilgili haberler Newsa'da`
+      : 'Newsa haber arama sayfası',
+    robots: { index: false, follow: true },
+  }
+}
 
-    setLoading(true)
-    setSearched(true)
+async function searchArticles(query: string): Promise<SearchResult[]> {
+  if (!query.trim()) return []
 
-    try {
-      const supabase = createBrowserClient()
-      const { data } = await supabase
-        .from('articles')
-        .select('id, title, slug, summary, published_at, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!articles_category_id_fkey(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)')
-        .eq('status', 'published')
-        .textSearch('title', trimmed, { type: 'websearch' })
-        .order('published_at', { ascending: false })
-        .limit(20)
+  try {
+    const supabase = await createServerClient()
+    const { data } = await supabase
+      .from('articles')
+      .select(
+        'id, title, slug, summary, published_at, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!articles_category_id_fkey(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)'
+      )
+      .eq('status', 'published')
+      .ilike('title', `%${query}%`)
+      .order('published_at', { ascending: false })
+      .limit(30)
 
-      setResults((data ?? []) as unknown as SearchResult[])
-    } catch {
-      setResults([])
-    } finally {
-      setLoading(false)
-    }
-  }, [query])
+    return (data ?? []) as unknown as SearchResult[]
+  } catch {
+    return []
+  }
+}
+
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const { q } = await searchParams
+  const query = q?.trim() ?? ''
+  const results = await searchArticles(query)
+  const hasSearched = query.length > 0
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
       <h1 className="mb-6 text-2xl font-bold">Haber Ara</h1>
 
-      <form onSubmit={handleSearch} className="mb-8 flex gap-2">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Haber ara..."
-          className="flex-1 rounded-md border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-          aria-label="Arama sorgusu"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          {loading ? 'Araniyor...' : 'Ara'}
-        </button>
-      </form>
+      <SearchForm initialQuery={query} />
 
-      {/* Results */}
-      {searched && !loading && results.length === 0 && (
+      {/* Arama yapılmadıysa ipucu */}
+      {!hasSearched && (
         <p className="py-12 text-center text-muted-foreground">
-          &quot;{query}&quot; icin sonuc bulunamadi
+          Aramak istediğiniz kelimeyi yukarıya yazın
         </p>
       )}
 
+      {/* Sonuç bulunamadı */}
+      {hasSearched && results.length === 0 && (
+        <p className="py-12 text-center text-muted-foreground">
+          &ldquo;{query}&rdquo; aramanızla eşleşen haber bulunamadı
+        </p>
+      )}
+
+      {/* Sonuçlar */}
       {results.length > 0 && (
         <>
-          <p className="mb-4 text-sm text-muted-foreground">{results.length} sonuc bulundu</p>
+          <p className="mb-4 text-sm text-muted-foreground">
+            <strong>{results.length}</strong> sonuç bulundu
+            {query && <> &mdash; &ldquo;{query}&rdquo; için</>}
+          </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map((a) => (
+            {results.map((article) => (
               <ArticleCard
-                key={a.id}
-                title={a.title}
-                slug={a.slug}
-                summary={a.summary}
-                coverImageUrl={a.cover_image?.file_url ?? null}
-                coverImageAlt={a.cover_image?.alt_text ?? null}
-                categoryName={a.category?.name ?? ''}
-                categorySlug={a.category?.slug ?? ''}
-                authorName={a.author?.display_name ?? a.author?.full_name ?? ''}
-                publishedAt={a.published_at}
+                key={article.id}
+                title={article.title}
+                slug={article.slug}
+                summary={article.summary}
+                coverImageUrl={article.cover_image?.file_url ?? null}
+                coverImageAlt={article.cover_image?.alt_text ?? null}
+                categoryName={article.category?.name ?? ''}
+                categorySlug={article.category?.slug ?? ''}
+                authorName={
+                  article.author?.display_name ?? article.author?.full_name ?? ''
+                }
+                publishedAt={article.published_at}
               />
             ))}
           </div>
         </>
-      )}
-
-      {!searched && (
-        <p className="py-12 text-center text-muted-foreground">
-          Aramak istediginiz kelimeyi yukariya yazin
-        </p>
       )}
     </main>
   )
