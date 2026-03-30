@@ -243,6 +243,175 @@ export interface Database {
           }
         ]
       }
+      ad_zones: {
+        Row: {
+          id: string
+          name: string
+          display_name: string
+          description: string | null
+          width: number | null
+          height: number | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          display_name: string
+          description?: string | null
+          width?: number | null
+          height?: number | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          name?: string
+          display_name?: string
+          description?: string | null
+          width?: number | null
+          height?: number | null
+          is_active?: boolean
+        }
+        Relationships: []
+      }
+      ad_campaigns: {
+        Row: {
+          id: string
+          name: string
+          advertiser_name: string
+          start_date: string
+          end_date: string | null
+          budget: number | null
+          status: 'draft' | 'active' | 'paused' | 'completed'
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          advertiser_name: string
+          start_date: string
+          end_date?: string | null
+          budget?: number | null
+          status?: 'draft' | 'active' | 'paused' | 'completed'
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          advertiser_name?: string
+          start_date?: string
+          end_date?: string | null
+          budget?: number | null
+          status?: 'draft' | 'active' | 'paused' | 'completed'
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'ad_campaigns_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      ad_creatives: {
+        Row: {
+          id: string
+          campaign_id: string
+          zone_id: string
+          title: string
+          type: 'image' | 'html' | 'text'
+          image_url: string | null
+          html_content: string | null
+          target_url: string
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          zone_id: string
+          title: string
+          type?: 'image' | 'html' | 'text'
+          image_url?: string | null
+          html_content?: string | null
+          target_url: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          zone_id?: string
+          title?: string
+          type?: 'image' | 'html' | 'text'
+          image_url?: string | null
+          html_content?: string | null
+          target_url?: string
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'ad_creatives_campaign_id_fkey'
+            columns: ['campaign_id']
+            isOneToOne: false
+            referencedRelation: 'ad_campaigns'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'ad_creatives_zone_id_fkey'
+            columns: ['zone_id']
+            isOneToOne: false
+            referencedRelation: 'ad_zones'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      ad_impressions: {
+        Row: {
+          id: string
+          creative_id: string
+          zone_id: string
+          event_type: 'impression' | 'click'
+          user_agent: string | null
+          ip_hash: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          creative_id: string
+          zone_id: string
+          event_type: 'impression' | 'click'
+          user_agent?: string | null
+          ip_hash?: string | null
+        }
+        Update: {
+          id?: string
+          creative_id?: string
+          zone_id?: string
+          event_type?: 'impression' | 'click'
+          user_agent?: string | null
+          ip_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'ad_impressions_creative_id_fkey'
+            columns: ['creative_id']
+            isOneToOne: false
+            referencedRelation: 'ad_creatives'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'ad_impressions_zone_id_fkey'
+            columns: ['zone_id']
+            isOneToOne: false
+            referencedRelation: 'ad_zones'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

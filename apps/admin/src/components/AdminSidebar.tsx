@@ -20,6 +20,7 @@ const menuItems = [
   { href: '/kullanicilar', label: 'Kullanicilar', icon: '\u{1F465}', roles: ['admin'] },
   { href: '/roller', label: 'Roller', icon: '\u{1F510}', roles: ['admin'] },
   { href: '/denetim', label: 'Denetim Logları', icon: '\u{1F4CB}', roles: ['admin'] },
+  { href: '/reklamlar', label: 'Reklamlar', icon: '\u{1F4E2}', roles: ['admin'] },
   { href: '/ayarlar', label: 'Ayarlar', icon: '\u2699\uFE0F', roles: ['admin'] },
   { href: '/cop-kutusu', label: 'Çöp Kutusu', icon: '\u{1F5D1}\uFE0F', roles: ['admin', 'editor'] },
 ]
