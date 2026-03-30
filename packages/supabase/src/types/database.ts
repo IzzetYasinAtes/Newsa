@@ -1,5 +1,5 @@
-// Bu dosya supabase gen types komutu ile otomatik oluşturulacak
-// Şimdilik placeholder olarak bırakıyoruz
+// Bu dosya supabase gen types komutu ile otomatik olusturulacak
+// Simdilik placeholder olarak birakiyoruz
 
 export interface Database {
   public: {
@@ -19,6 +19,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        Relationships: []
       }
       categories: {
         Row: {
@@ -36,6 +37,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['categories']['Row'], 'id' | 'created_at' | 'updated_at'> & { id?: string }
         Update: Partial<Database['public']['Tables']['categories']['Insert']>
+        Relationships: []
       }
       tags: {
         Row: {
@@ -46,6 +48,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['tags']['Row'], 'id' | 'created_at'> & { id?: string }
         Update: Partial<Database['public']['Tables']['tags']['Insert']>
+        Relationships: []
       }
       articles: {
         Row: {
@@ -82,6 +85,36 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['articles']['Row'], 'id' | 'view_count' | 'share_count' | 'created_at' | 'updated_at'> & { id?: string }
         Update: Partial<Database['public']['Tables']['articles']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'articles_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'articles_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'articles_cover_image_id_fkey'
+            columns: ['cover_image_id']
+            isOneToOne: false
+            referencedRelation: 'media'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'articles_editor_id_fkey'
+            columns: ['editor_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
       media: {
         Row: {
@@ -102,7 +135,84 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['media']['Row'], 'id' | 'created_at'> & { id?: string }
         Update: Partial<Database['public']['Tables']['media']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'media_uploaded_by_fkey'
+            columns: ['uploaded_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
+      article_tags: {
+        Row: {
+          article_id: string
+          tag_id: string
+          created_at: string
+        }
+        Insert: {
+          article_id: string
+          tag_id: string
+        }
+        Update: {
+          article_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'article_tags_article_id_fkey'
+            columns: ['article_id']
+            isOneToOne: false
+            referencedRelation: 'articles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'article_tags_tag_id_fkey'
+            columns: ['tag_id']
+            isOneToOne: false
+            referencedRelation: 'tags'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      article_media: {
+        Row: {
+          article_id: string
+          media_id: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          article_id: string
+          media_id: string
+          sort_order: number
+        }
+        Update: {
+          article_id?: string
+          media_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'article_media_article_id_fkey'
+            columns: ['article_id']
+            isOneToOne: false
+            referencedRelation: 'articles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'article_media_media_id_fkey'
+            columns: ['media_id']
+            isOneToOne: false
+            referencedRelation: 'media'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
     }
     Functions: {
       generate_slug: {
@@ -113,6 +223,12 @@ export interface Database {
         Args: { article_id: string }
         Returns: void
       }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

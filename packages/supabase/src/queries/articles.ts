@@ -6,7 +6,7 @@ type Client = SupabaseClient<Database>
 interface ListArticlesParams {
   page?: number
   perPage?: number
-  status?: string
+  status?: 'draft' | 'review' | 'published' | 'archived'
   categoryId?: string
   authorId?: string
   tagSlug?: string
@@ -37,8 +37,8 @@ export async function listArticles(supabase: Client, params: ListArticlesParams 
     .from('articles')
     .select(`
       *,
-      category:categories!category_id(id, name, slug),
-      author:profiles!author_id(id, full_name, display_name, avatar_url)
+      category:categories!articles_category_id_fkey(id, name, slug),
+      author:profiles!articles_author_id_fkey(id, full_name, display_name, avatar_url)
     `, { count: 'exact' })
 
   if (status) query = query.eq('status', status)
@@ -73,11 +73,11 @@ export async function getArticleBySlug(supabase: Client, slug: string) {
     .from('articles')
     .select(`
       *,
-      category:categories!category_id(id, name, slug),
-      author:profiles!author_id(id, full_name, display_name, avatar_url, bio),
-      cover_image:media!cover_image_id(id, file_url, alt_text),
-      article_tags(tag:tags(id, name, slug)),
-      article_media(media:media(id, file_url, alt_text, caption), sort_order)
+      category:categories!articles_category_id_fkey(id, name, slug),
+      author:profiles!articles_author_id_fkey(id, full_name, display_name, avatar_url, bio),
+      cover_image:media!articles_cover_image_id_fkey(id, file_url, alt_text),
+      article_tags(tag:tags!article_tags_tag_id_fkey(id, name, slug)),
+      article_media(media:media!article_media_media_id_fkey(id, file_url, alt_text, caption), sort_order)
     `)
     .eq('slug', slug)
     .single()
@@ -90,11 +90,11 @@ export async function getArticleById(supabase: Client, id: string) {
     .from('articles')
     .select(`
       *,
-      category:categories!category_id(id, name, slug),
-      author:profiles!author_id(id, full_name, display_name, avatar_url),
-      cover_image:media!cover_image_id(id, file_url, alt_text),
-      article_tags(tag:tags(id, name, slug)),
-      article_media(media:media(id, file_url, alt_text, caption), sort_order)
+      category:categories!articles_category_id_fkey(id, name, slug),
+      author:profiles!articles_author_id_fkey(id, full_name, display_name, avatar_url),
+      cover_image:media!articles_cover_image_id_fkey(id, file_url, alt_text),
+      article_tags(tag:tags!article_tags_tag_id_fkey(id, name, slug)),
+      article_media(media:media!article_media_media_id_fkey(id, file_url, alt_text, caption), sort_order)
     `)
     .eq('id', id)
     .single()
