@@ -114,15 +114,14 @@ export function AdZone({ zone, className }: AdZoneProps) {
       )}
 
       {creative.type === 'html' && creative.html_content && (
-        <a
-          href={creative.target_url}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          onClick={handleClick}
-          className="block"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: creative.html_content }}
-        />
+        <div onClick={handleClick} className="block cursor-pointer">
+          <iframe
+            srcDoc={creative.html_content}
+            sandbox="allow-scripts allow-popups"
+            style={{ border: 'none', width: '100%', height: '100%' }}
+            title={`Reklam: ${creative.title}`}
+          />
+        </div>
       )}
 
       {creative.type === 'text' && (
