@@ -10,11 +10,16 @@ interface SidebarProps {
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '\u{1F4CA}' },
   { href: '/haberler', label: 'Haberler', icon: '\u{1F4F0}' },
+  { href: '/manset', label: 'Manşet Yönetimi', icon: '\u2B50' },
   { href: '/kategoriler', label: 'Kategoriler', icon: '\u{1F4C1}' },
   { href: '/etiketler', label: 'Etiketler', icon: '\u{1F3F7}\uFE0F' },
   { href: '/medya', label: 'Medya', icon: '\u{1F5BC}\uFE0F' },
+  { href: '/menuler', label: 'Menüler', icon: '\u2630' },
+  { href: '/sayfalar', label: 'Sayfalar', icon: '\u{1F4C4}' },
+  { href: '/bildirimler', label: 'Bildirimler', icon: '\u{1F514}' },
   { href: '/kullanicilar', label: 'Kullanicilar', icon: '\u{1F465}', roles: ['admin'] },
   { href: '/roller', label: 'Roller', icon: '\u{1F510}', roles: ['admin'] },
+  { href: '/denetim', label: 'Denetim Logları', icon: '\u{1F4CB}', roles: ['admin'] },
   { href: '/ayarlar', label: 'Ayarlar', icon: '\u2699\uFE0F', roles: ['admin'] },
 ]
 
