@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { formatDate, getReadingTime } from '@newsa/shared'
 import type { Metadata } from 'next'
 import JsonLd from '@/components/JsonLd'
+import { AdZone } from '@/components/ads/AdZone'
 
 // Revalidate every 5 minutes (ISR) — article content is relatively stable
 export const revalidate = 300
@@ -204,6 +205,9 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
       {article.content_html && (
         <div className="prose prose-lg mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: article.content_html }} />
       )}
+
+      {/* In-Article Reklam */}
+      <AdZone zone="in-article" className="my-6" />
 
       {/* Source */}
       {article.source_name && (
