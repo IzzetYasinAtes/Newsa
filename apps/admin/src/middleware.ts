@@ -26,18 +26,18 @@ export async function middleware(request: NextRequest) {
   )
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
   // Login sayfasi haric tum sayfalar korumali
-  if (!user && !request.nextUrl.pathname.startsWith('/login')) {
+  if (!session && !request.nextUrl.pathname.startsWith('/login')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   // Zaten giris yapmis kullanici login'e gelirse dashboard'a yonlendir
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
+  if (session && request.nextUrl.pathname.startsWith('/login')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

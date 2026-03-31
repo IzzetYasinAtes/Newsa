@@ -28,32 +28,39 @@ export function AdZone({ zone, className }: AdZoneProps) {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
+    if (!supabaseUrl || !supabaseAnonKey) return
+
+    let cancelled = false
     const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
     async function loadAd() {
-      const { data: zoneData } = await supabase
-        .from('ad_zones')
-        .select('id')
-        .eq('name', zone)
-        .eq('is_active', true)
-        .single()
-
-      if (!zoneData) return
-
-      const { data: creativeData } = await supabase
+      const { data } = await supabase
         .from('ad_creatives')
-        .select('id, zone_id, title, type, image_url, html_content, target_url')
-        .eq('zone_id', zoneData.id)
+        .select(`
+          id, zone_id, title, type, image_url, html_content, target_url,
+          ad_zones!inner(name, is_active)
+        `)
+        .eq('ad_zones.name', zone)
+        .eq('ad_zones.is_active', true)
         .eq('is_active', true)
         .limit(1)
-        .single()
+        .maybeSingle()
 
-      if (creativeData) {
-        setCreative(creativeData as AdCreative)
+      if (data && !cancelled) {
+        setCreative({
+          id: data.id,
+          zone_id: data.zone_id,
+          title: data.title,
+          type: data.type as AdCreative['type'],
+          image_url: data.image_url,
+          html_content: data.html_content,
+          target_url: data.target_url,
+        })
       }
     }
 
-    loadAd().catch(console.error)
+    loadAd().catch(() => {})
+    return () => { cancelled = true }
   }, [zone])
 
   // Impression tracking

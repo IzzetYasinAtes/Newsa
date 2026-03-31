@@ -39,7 +39,7 @@ export function Footer() {
             <ul className="mt-2 space-y-1">
               <li><Link href="/sayfa/hakkimizda" className="text-sm text-muted-foreground hover:text-foreground">Hakkimizda</Link></li>
               <li><Link href="/sayfa/iletisim" className="text-sm text-muted-foreground hover:text-foreground">Iletisim</Link></li>
-              <li><Link href="/sayfa/gizlilik" className="text-sm text-muted-foreground hover:text-foreground">Gizlilik Politikasi</Link></li>
+              <li><Link href="/sayfa/gizlilik-politikasi" className="text-sm text-muted-foreground hover:text-foreground">Gizlilik Politikasi</Link></li>
             </ul>
           </div>
         </div>

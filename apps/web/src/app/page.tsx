@@ -31,12 +31,17 @@ async function getHomeData() {
         .limit(12),
     ])
 
+    if (headlines.error) console.error('headlines error:', headlines.error)
+    if (featured.error) console.error('featured error:', featured.error)
+    if (latest.error) console.error('latest error:', latest.error)
+
     return {
       headlines: (headlines.data ?? []) as unknown as Record<string, unknown>[],
       featured: (featured.data ?? []) as unknown as Record<string, unknown>[],
       latest: (latest.data ?? []) as unknown as Record<string, unknown>[],
     }
-  } catch {
+  } catch (err) {
+    console.error('getHomeData error:', err)
     return { headlines: [], featured: [], latest: [] }
   }
 }

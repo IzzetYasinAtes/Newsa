@@ -369,6 +369,32 @@ export interface Database {
           }
         ]
       }
+      pages: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          content: Record<string, unknown> | null
+          content_html: string | null
+          status: 'draft' | 'published'
+          seo_title: string | null
+          seo_description: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['pages']['Row'], 'id' | 'created_at' | 'updated_at'> & { id?: string }
+        Update: Partial<Database['public']['Tables']['pages']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'pages_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       ad_impressions: {
         Row: {
           id: string

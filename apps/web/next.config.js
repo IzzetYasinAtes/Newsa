@@ -1,5 +1,3 @@
-const { withSentryConfig } = require('@sentry/nextjs')
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@newsa/ui', '@newsa/shared'],
@@ -10,10 +8,17 @@ const nextConfig = {
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
-      // Common CDN/image hosting patterns for external article images
       {
         protocol: 'https',
         hostname: '**.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
       },
     ],
     // Optimize image formats
@@ -48,9 +53,14 @@ const nextConfig = {
   },
 }
 
-module.exports = withSentryConfig(nextConfig, {
-  silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  disableSourceMapUpload: !process.env.SENTRY_AUTH_TOKEN,
-})
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  const { withSentryConfig } = require('@sentry/nextjs')
+  module.exports = withSentryConfig(nextConfig, {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    disableSourceMapUpload: !process.env.SENTRY_AUTH_TOKEN,
+  })
+} else {
+  module.exports = nextConfig
+}

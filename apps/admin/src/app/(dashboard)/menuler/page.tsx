@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 import { PageHeader } from '@/components/PageHeader'
 
 interface Menu {
@@ -16,12 +15,7 @@ interface MenuWithCount extends Menu {
 
 async function getMenus(): Promise<MenuWithCount[]> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { getAll() { return cookieStore.getAll() }, setAll() {} } }
-    )
+    const supabase = await createClient()
     const { data: menus } = await supabase.from('menus').select('*').order('name')
     if (!menus) return []
 
