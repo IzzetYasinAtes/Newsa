@@ -1,5 +1,6 @@
 import { createServerClient } from '@newsa/supabase'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { ArticleCard } from '@/components/ArticleCard'
 import { Pagination } from '@/components/Pagination'
@@ -25,13 +26,22 @@ async function getAuthorData(id: string, page: number) {
     const from = (page - 1) * perPage
     const { data: articles, count } = await supabase
       .from('articles')
-      .select('id, title, slug, summary, published_at, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!articles_category_id_fkey(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)', { count: 'exact' })
+      .select('id, title, slug, summary, published_at, view_count, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!articles_category_id_fkey(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)', { count: 'exact' })
       .eq('author_id', id)
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .range(from, from + perPage - 1)
 
-    return { author, articles: (articles ?? []) as unknown as Record<string, unknown>[], total: count ?? 0, perPage }
+    // Calculate total views across all articles
+    const { data: viewData } = await supabase
+      .from('articles')
+      .select('view_count')
+      .eq('author_id', id)
+      .eq('status', 'published')
+
+    const totalViews = (viewData ?? []).reduce((sum, row) => sum + ((row as { view_count: number }).view_count || 0), 0)
+
+    return { author, articles: (articles ?? []) as unknown as Record<string, unknown>[], total: count ?? 0, perPage, totalViews }
   } catch {
     return null
   }
@@ -66,26 +76,50 @@ export default async function AuthorPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <Link href="/" className="hover:text-foreground">Ana Sayfa</Link>
+        <span aria-hidden="true">/</span>
+        <span className="text-foreground">{displayName}</span>
+      </nav>
+
       {/* Author header */}
-      <div className="mb-8 flex items-start gap-4">
-        {data.author.avatar_url && (
+      <div className="mb-10 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        {data.author.avatar_url ? (
           <Image
             src={data.author.avatar_url}
             alt={displayName}
-            width={80}
-            height={80}
-            className="h-20 w-20 rounded-full object-cover"
+            width={120}
+            height={120}
+            className="h-28 w-28 flex-shrink-0 rounded-full object-cover ring-4 ring-border"
           />
+        ) : (
+          <div className="flex h-28 w-28 flex-shrink-0 items-center justify-center rounded-full bg-muted ring-4 ring-border">
+            <span className="text-3xl font-bold text-muted-foreground">{displayName.charAt(0).toUpperCase()}</span>
+          </div>
         )}
-        <div>
-          <h1 className="text-2xl font-bold">{displayName}</h1>
-          {data.author.bio && <p className="mt-2 text-muted-foreground">{data.author.bio}</p>}
-          <p className="mt-1 text-sm text-muted-foreground">{data.total} haber</p>
+        <div className="text-center sm:text-left">
+          <h1 className="text-3xl font-bold">{displayName}</h1>
+          {data.author.bio && <p className="mt-2 max-w-2xl text-muted-foreground">{data.author.bio}</p>}
+          <div className="mt-4 flex items-center justify-center gap-6 sm:justify-start">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{data.total}</p>
+              <p className="text-sm text-muted-foreground">Haber</p>
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div className="text-center">
+              <p className="text-2xl font-bold">{data.totalViews.toLocaleString('tr-TR')}</p>
+              <p className="text-sm text-muted-foreground">Toplam G\u00f6r\u00fcnt\u00fclenme</p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Section title */}
+      <h2 className="mb-6 text-xl font-bold">Haberleri</h2>
+
       {/* Articles grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {data.articles.map((a) => {
           const cover = a.cover_image as { file_url?: string; alt_text?: string } | null
           const cat = a.category as { name: string; slug: string } | null
@@ -102,6 +136,7 @@ export default async function AuthorPage({
               categorySlug={cat?.slug ?? ''}
               authorName={auth?.display_name ?? auth?.full_name ?? ''}
               publishedAt={a.published_at as string | null}
+              variant="featured"
             />
           )
         })}

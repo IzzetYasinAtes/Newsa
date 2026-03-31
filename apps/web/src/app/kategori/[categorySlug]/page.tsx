@@ -1,5 +1,6 @@
 import { createServerClient } from '@newsa/supabase'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { ArticleCard } from '@/components/ArticleCard'
 import { Pagination } from '@/components/Pagination'
 import type { Metadata } from 'next'
@@ -67,10 +68,22 @@ export default async function CategoryPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="mb-2 text-2xl font-bold">{data.category.name}</h1>
-      {data.category.description && <p className="mb-6 text-muted-foreground">{data.category.description}</p>}
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <Link href="/" className="hover:text-foreground">Ana Sayfa</Link>
+        <span aria-hidden="true">/</span>
+        <span className="text-foreground">{data.category.name}</span>
+      </nav>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Category header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{data.category.name}</h1>
+        {data.category.description && <p className="mt-2 text-lg text-muted-foreground">{data.category.description}</p>}
+        <p className="mt-2 text-sm text-muted-foreground">{data.total} haber</p>
+      </div>
+
+      {/* Articles grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {data.articles.map((a) => {
           const cover = a.cover_image as { file_url?: string; alt_text?: string } | null
           const cat = a.category as { name: string; slug: string } | null
@@ -87,6 +100,7 @@ export default async function CategoryPage({
               categorySlug={cat?.slug ?? ''}
               authorName={auth?.display_name ?? auth?.full_name ?? ''}
               publishedAt={a.published_at as string | null}
+              variant="featured"
             />
           )
         })}
