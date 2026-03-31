@@ -18,7 +18,7 @@ const SETTING_KEYS = [
 ]
 
 export default async function AyarlarPage() {
-  let initialSettings: Record<string, string> = {}
+  const initialSettings: Record<string, string> = {}
 
   try {
     const supabase = await createClient()
