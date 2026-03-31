@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createBrowserClient } from '@newsa/supabase'
+import { createBrowserClient } from '@supabase/ssr'
 import { ArticleCard } from './ArticleCard'
 
 interface ArticleData {
@@ -35,7 +35,10 @@ export function LoadMoreArticles({ initialArticles }: LoadMoreArticlesProps) {
   async function loadMore() {
     setLoading(true)
     try {
-      const supabase = createBrowserClient()
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
       const from = page * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
 
