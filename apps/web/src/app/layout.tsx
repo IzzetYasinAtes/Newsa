@@ -48,11 +48,17 @@ export default function RootLayout({
     <html lang="tr" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen font-sans antialiased">
         <Providers>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-black"
+          >
+            İçeriğe Geç
+          </a>
           <Header />
           <div className="mx-auto max-w-7xl px-4 py-2">
             <AdZone zone="header-banner" className="mb-2" />
           </div>
-          <div className="min-h-[calc(100vh-3.5rem)]">
+          <div id="main-content" className="min-h-[calc(100vh-3.5rem)]">
             {children}
           </div>
           <Footer />

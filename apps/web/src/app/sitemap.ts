@@ -36,6 +36,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
+      url: `${SITE_URL}/yazarlar`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/sayfa/hakkimizda`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/sayfa/iletisim`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/sayfa/gizlilik-politikasi`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+    {
       url: `${SITE_URL}/arama`,
       lastModified: new Date(),
       changeFrequency: 'weekly',

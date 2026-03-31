@@ -3,6 +3,9 @@ import { createServerClient } from '@newsa/supabase'
 import { ArticleCard } from '@/components/ArticleCard'
 import { LoadMoreArticles } from '@/components/LoadMoreArticles'
 import { AdZone } from '@/components/ads/AdZone'
+import JsonLd from '@/components/JsonLd'
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
 // Revalidate every 60 seconds (ISR) — serves cached version for performance
 export const revalidate = 60
@@ -313,8 +316,44 @@ export default async function HomePage() {
   const { headlines, featured, latest, breaking, mostRead, trendTags, categoryBlocks } =
     await getHomeData()
 
+  const organizationJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Newsa',
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+    sameAs: [
+      'https://twitter.com/newsa',
+      'https://facebook.com/newsa',
+      'https://instagram.com/newsa',
+      'https://youtube.com/newsa',
+    ],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'info@newsa.com',
+      telephone: '+90-212-555-00-00',
+      contactType: 'customer service',
+      availableLanguage: 'Turkish',
+    },
+  }
+
+  const websiteJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Newsa',
+    url: SITE_URL,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/arama?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
   return (
     <main>
+      <JsonLd data={organizationJsonLd} />
+      <JsonLd data={websiteJsonLd} />
+
       {/* Son Dakika Bandi */}
       {breaking.length > 0 && <BreakingNewsBanner articles={breaking} />}
 
