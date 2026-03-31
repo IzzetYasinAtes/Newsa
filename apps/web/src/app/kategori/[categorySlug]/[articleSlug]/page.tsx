@@ -128,6 +128,10 @@ export async function generateMetadata({ params }: { params: Promise<{ articleSl
 
   const { article } = result
 
+  const authorName = article.author?.display_name ?? article.author?.full_name ?? undefined
+  const categoryName = article.category?.name ?? undefined
+  const coverImageUrl = article.cover_image?.file_url ?? undefined
+
   return {
     title: article.seo_title || article.title,
     description: article.seo_description || article.summary || undefined,
@@ -136,9 +140,16 @@ export async function generateMetadata({ params }: { params: Promise<{ articleSl
       description: article.seo_description || article.summary || undefined,
       type: 'article',
       publishedTime: article.published_at ?? undefined,
-      ...(article.cover_image?.file_url ? { images: [{ url: article.cover_image.file_url, width: 1200, height: 630 }] } : {}),
+      ...(authorName ? { authors: [authorName] } : {}),
+      ...(categoryName ? { section: categoryName } : {}),
+      ...(coverImageUrl ? { images: [{ url: coverImageUrl, width: 1200, height: 630 }] } : {}),
     },
-    twitter: { card: 'summary_large_image' },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.seo_title || article.title,
+      description: article.seo_description || article.summary || undefined,
+      ...(coverImageUrl ? { images: [coverImageUrl] } : {}),
+    },
     ...(article.canonical_url ? { alternates: { canonical: article.canonical_url } } : {}),
   }
 }
@@ -263,6 +274,8 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                 sizes="(max-width: 1024px) 100vw, 66vw"
                 className="object-cover"
                 priority
+                placeholder="empty"
+                quality={75}
               />
             </div>
           )}

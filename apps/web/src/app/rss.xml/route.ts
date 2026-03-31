@@ -21,6 +21,7 @@ export async function GET() {
     title: string
     slug: string
     summary: string | null
+    content_html: string | null
     published_at: string | null
     category: { name: string; slug: string } | null
     author: { full_name: string; display_name: string | null } | null
@@ -30,14 +31,14 @@ export async function GET() {
   const { data: rawArticles } = await supabase
     .from('articles')
     .select(`
-      id, title, slug, summary, published_at,
+      id, title, slug, summary, content_html, published_at,
       category:categories!articles_category_id_fkey(name, slug),
       author:profiles!articles_author_id_fkey(full_name, display_name),
       cover_image:media!articles_cover_image_id_fkey(file_url, alt_text)
     `)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
-    .limit(50)
+    .limit(20)
 
   const articles = rawArticles as unknown as RssArticle[] | null
 
@@ -67,6 +68,7 @@ export async function GET() {
       ${authorName ? `<author>${escapeXml(authorName)}</author>` : ''}
       ${cat ? `<category>${escapeXml(cat.name)}</category>` : ''}
       ${cover?.file_url ? `<enclosure url="${escapeXml(cover.file_url)}" type="image/jpeg" length="0" />` : ''}
+      ${article.content_html ? `<content:encoded><![CDATA[${article.content_html}]]></content:encoded>` : ''}
     </item>`
     })
     .join('')
@@ -86,7 +88,7 @@ export async function GET() {
 
   return new Response(rss, {
     headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
+      'Content-Type': 'application/rss+xml; charset=utf-8',
       'Cache-Control': 'public, s-maxage=3600',
     },
   })

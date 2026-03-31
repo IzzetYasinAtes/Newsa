@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createServerClient } from '@newsa/supabase'
 import { ArticleCard } from '@/components/ArticleCard'
+import { LoadMoreArticles } from '@/components/LoadMoreArticles'
 import { AdZone } from '@/components/ads/AdZone'
 
 // Revalidate every 60 seconds (ISR) — serves cached version for performance
@@ -43,6 +44,13 @@ interface TagRow {
   slug: string
 }
 
+interface CategoryBlock {
+  name: string
+  slug: string
+  articles: ArticleRow[]
+}
+
+
 // ─── Data Fetching ───
 
 const ARTICLE_SELECT =
@@ -52,8 +60,18 @@ async function getHomeData() {
   try {
     const supabase = await createServerClient()
 
-    const [headlines, featured, latest, breaking, mostRead, trendTags] =
-      await Promise.all([
+    const [
+      headlines,
+      featured,
+      latest,
+      breaking,
+      mostRead,
+      trendTags,
+      catGundem,
+      catEkonomi,
+      catTeknoloji,
+      catSpor,
+    ] = await Promise.all([
         // Mansetler (is_headline=true, limit 3)
         supabase
           .from('articles')
@@ -102,6 +120,42 @@ async function getHomeData() {
 
         // Trend etiketler
         supabase.from('tags').select('id, name, slug').limit(12),
+
+        // Kategori: Gundem
+        supabase
+          .from('articles')
+          .select('id, title, slug, summary, status, published_at, view_count, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!inner(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)')
+          .eq('status', 'published')
+          .eq('category.slug', 'gundem')
+          .order('published_at', { ascending: false })
+          .limit(3),
+
+        // Kategori: Ekonomi
+        supabase
+          .from('articles')
+          .select('id, title, slug, summary, status, published_at, view_count, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!inner(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)')
+          .eq('status', 'published')
+          .eq('category.slug', 'ekonomi')
+          .order('published_at', { ascending: false })
+          .limit(3),
+
+        // Kategori: Teknoloji
+        supabase
+          .from('articles')
+          .select('id, title, slug, summary, status, published_at, view_count, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!inner(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)')
+          .eq('status', 'published')
+          .eq('category.slug', 'teknoloji')
+          .order('published_at', { ascending: false })
+          .limit(3),
+
+        // Kategori: Spor
+        supabase
+          .from('articles')
+          .select('id, title, slug, summary, status, published_at, view_count, cover_image:media!articles_cover_image_id_fkey(file_url, alt_text), category:categories!inner(name, slug), author:profiles!articles_author_id_fkey(full_name, display_name)')
+          .eq('status', 'published')
+          .eq('category.slug', 'spor')
+          .order('published_at', { ascending: false })
+          .limit(3),
       ])
 
     if (headlines.error) console.error('headlines error:', headlines.error)
@@ -110,6 +164,17 @@ async function getHomeData() {
     if (breaking.error) console.error('breaking error:', breaking.error)
     if (mostRead.error) console.error('mostRead error:', mostRead.error)
     if (trendTags.error) console.error('trendTags error:', trendTags.error)
+    if (catGundem.error) console.error('catGundem error:', catGundem.error)
+    if (catEkonomi.error) console.error('catEkonomi error:', catEkonomi.error)
+    if (catTeknoloji.error) console.error('catTeknoloji error:', catTeknoloji.error)
+    if (catSpor.error) console.error('catSpor error:', catSpor.error)
+
+    const categoryBlocks: CategoryBlock[] = [
+      { name: 'Gundem', slug: 'gundem', articles: (catGundem.data ?? []) as unknown as ArticleRow[] },
+      { name: 'Ekonomi', slug: 'ekonomi', articles: (catEkonomi.data ?? []) as unknown as ArticleRow[] },
+      { name: 'Teknoloji', slug: 'teknoloji', articles: (catTeknoloji.data ?? []) as unknown as ArticleRow[] },
+      { name: 'Spor', slug: 'spor', articles: (catSpor.data ?? []) as unknown as ArticleRow[] },
+    ]
 
     return {
       headlines: (headlines.data ?? []) as unknown as ArticleRow[],
@@ -118,6 +183,7 @@ async function getHomeData() {
       breaking: (breaking.data ?? []) as unknown as BreakingArticle[],
       mostRead: (mostRead.data ?? []) as unknown as MostReadArticle[],
       trendTags: (trendTags.data ?? []) as unknown as TagRow[],
+      categoryBlocks,
     }
   } catch (err) {
     console.error('getHomeData error:', err)
@@ -128,6 +194,7 @@ async function getHomeData() {
       breaking: [],
       mostRead: [],
       trendTags: [],
+      categoryBlocks: [],
     }
   }
 }
@@ -243,7 +310,7 @@ function TrendingTagsWidget({ tags }: { tags: TagRow[] }) {
 // ─── Page ───
 
 export default async function HomePage() {
-  const { headlines, featured, latest, breaking, mostRead, trendTags } =
+  const { headlines, featured, latest, breaking, mostRead, trendTags, categoryBlocks } =
     await getHomeData()
 
   return (
@@ -302,24 +369,62 @@ export default async function HomePage() {
             {/* Son Haberler */}
             <div>
               <h2 className="mb-4 text-lg font-bold sm:text-xl">Son Haberler</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {latest.map((l) => (
-                  <ArticleCard
-                    key={l.id}
-                    {...extractArticleProps(l)}
-                    variant="featured"
-                  />
-                ))}
-              </div>
-              {latest.length === 0 && (
-                <div className="py-20 text-center">
-                  <h2 className="text-2xl font-bold">Newsa</h2>
-                  <p className="mt-2 text-muted-foreground">
-                    Haber Platformu — Henüz yayınlanmış haber yok
-                  </p>
-                </div>
-              )}
+              <LoadMoreArticles initialArticles={latest} />
             </div>
+
+            {/* Kategori Bloklari */}
+            {categoryBlocks.length > 0 && (
+              <div>
+                <h2 className="mb-4 text-lg font-bold sm:text-xl">Kategoriler</h2>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {categoryBlocks.map((block) => {
+                    if (block.articles.length === 0) return null
+                    const firstArticle = block.articles[0]
+                    const restArticles = block.articles.slice(1)
+                    return (
+                      <div
+                        key={block.slug}
+                        className="rounded-xl border border-border/50 bg-card p-4 dark:border-slate-700 dark:bg-slate-800"
+                      >
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="text-base font-bold">{block.name}</h3>
+                          <Link
+                            href={`/kategori/${block.slug}`}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            Tumunu Gor
+                          </Link>
+                        </div>
+                        {firstArticle && (
+                          <ArticleCard
+                            {...extractArticleProps(firstArticle)}
+                            variant="compact"
+                          />
+                        )}
+                        {restArticles.length > 0 && (
+                          <ul className="mt-2 space-y-1.5">
+                            {restArticles.map((a) => {
+                              const articleHref = `/kategori/${a.category?.slug ?? block.slug}/${a.slug}`
+                              return (
+                                <li key={a.id}>
+                                  <Link
+                                    href={articleHref}
+                                    className="flex items-start gap-2 rounded px-2 py-1 text-sm transition-colors hover:bg-muted/50"
+                                  >
+                                    <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                                    <span className="line-clamp-1">{a.title}</span>
+                                  </Link>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sag: Sidebar (1/3) */}
