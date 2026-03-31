@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const categoryLinks = [
-  { name: 'Gundem', slug: 'gundem' },
+  { name: 'Gündem', slug: 'gundem' },
   { name: 'Ekonomi', slug: 'ekonomi' },
   { name: 'Teknoloji', slug: 'teknoloji' },
   { name: 'Spor', slug: 'spor' },
-  { name: 'Kultur-Sanat', slug: 'kultur-sanat' },
+  { name: 'Kültür-Sanat', slug: 'kultur-sanat' },
 ]
 
 export function Footer() {
@@ -16,7 +16,7 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-bold">Newsa</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Turkiye ve bolge odakli modern dijital haber platformu.
+              Türkiye ve bölge odaklı modern dijital haber platformu.
             </p>
           </div>
           <div>
@@ -35,16 +35,16 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold">Hakkimizda</h4>
+            <h4 className="font-semibold">Hakkımızda</h4>
             <ul className="mt-2 space-y-1">
-              <li><Link href="/sayfa/hakkimizda" className="text-sm text-muted-foreground hover:text-foreground">Hakkimizda</Link></li>
-              <li><Link href="/sayfa/iletisim" className="text-sm text-muted-foreground hover:text-foreground">Iletisim</Link></li>
-              <li><Link href="/sayfa/gizlilik-politikasi" className="text-sm text-muted-foreground hover:text-foreground">Gizlilik Politikasi</Link></li>
+              <li><Link href="/sayfa/hakkimizda" className="text-sm text-muted-foreground hover:text-foreground">Hakkımızda</Link></li>
+              <li><Link href="/sayfa/iletisim" className="text-sm text-muted-foreground hover:text-foreground">İletişim</Link></li>
+              <li><Link href="/sayfa/gizlilik-politikasi" className="text-sm text-muted-foreground hover:text-foreground">Gizlilik Politikası</Link></li>
             </ul>
           </div>
         </div>
         <div className="mt-8 border-t pt-4 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Newsa. Tum haklari saklidir.
+          &copy; {new Date().getFullYear()} Newsa. Tüm hakları saklıdır.
         </div>
       </div>
     </footer>

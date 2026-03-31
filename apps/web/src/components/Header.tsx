@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const categories = [
-  { name: 'Gundem', slug: 'gundem' },
+  { name: 'Gündem', slug: 'gundem' },
   { name: 'Ekonomi', slug: 'ekonomi' },
   { name: 'Teknoloji', slug: 'teknoloji' },
   { name: 'Spor', slug: 'spor' },
-  { name: 'Kultur-Sanat', slug: 'kultur-sanat' },
+  { name: 'Kültür-Sanat', slug: 'kultur-sanat' },
 ]
 
 export function Header() {
