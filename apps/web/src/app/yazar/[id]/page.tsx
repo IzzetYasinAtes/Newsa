@@ -1,5 +1,6 @@
 import { createServerClient } from '@newsa/supabase'
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import { ArticleCard } from '@/components/ArticleCard'
 import { Pagination } from '@/components/Pagination'
 import type { Metadata } from 'next'
@@ -68,9 +69,11 @@ export default async function AuthorPage({
       {/* Author header */}
       <div className="mb-8 flex items-start gap-4">
         {data.author.avatar_url && (
-          <img
+          <Image
             src={data.author.avatar_url}
             alt={displayName}
+            width={80}
+            height={80}
             className="h-20 w-20 rounded-full object-cover"
           />
         )}

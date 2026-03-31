@@ -32,7 +32,7 @@ export default function TagsPage() {
       }
     }
     loadData()
-  }, [])
+  }, [supabase])
 
   async function loadTags() {
     try {
