@@ -29,11 +29,11 @@ export function SearchForm({ initialQuery }: SearchFormProps) {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Haber ara..."
         aria-label="Arama sorgusu"
-        className="flex-1 rounded-lg border bg-background px-5 py-3 text-base outline-none focus:ring-2 focus:ring-primary"
+        className="flex-1 rounded-lg border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary sm:px-5 sm:text-base"
       />
       <button
         type="submit"
-        className="rounded-lg bg-primary px-8 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90"
+        className="rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:px-8 sm:text-base"
       >
         Ara
       </button>

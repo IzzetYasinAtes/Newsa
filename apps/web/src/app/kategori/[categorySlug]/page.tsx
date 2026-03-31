@@ -77,8 +77,8 @@ export default async function CategoryPage({
 
       {/* Category header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">{data.category.name}</h1>
-        {data.category.description && <p className="mt-2 text-lg text-muted-foreground">{data.category.description}</p>}
+        <h1 className="text-2xl font-bold sm:text-3xl">{data.category.name}</h1>
+        {data.category.description && <p className="mt-2 text-base text-muted-foreground sm:text-lg">{data.category.description}</p>}
         <p className="mt-2 text-sm text-muted-foreground">{data.total} haber</p>
       </div>
 

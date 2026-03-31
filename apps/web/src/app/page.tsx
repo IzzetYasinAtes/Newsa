@@ -163,7 +163,7 @@ function BreakingNewsBanner({
   return (
     <div className="overflow-hidden bg-red-600 text-white" role="marquee" aria-label="Son dakika haberleri">
       <div className="flex items-center">
-        <span className="flex-shrink-0 bg-red-800 px-4 py-2 text-sm font-bold uppercase tracking-wide">
+        <span className="flex-shrink-0 bg-red-800 px-3 py-1.5 text-xs font-bold uppercase tracking-wide sm:px-4 sm:py-2 sm:text-sm">
           Son Dakika
         </span>
         <div className="relative flex-1 overflow-hidden py-2">
@@ -176,7 +176,7 @@ function BreakingNewsBanner({
                 <Link
                   key={`${a.id}-${i}`}
                   href={href}
-                  className="mx-6 inline-block text-sm font-medium hover:underline"
+                  className="mx-4 inline-block text-xs font-medium hover:underline sm:mx-6 sm:text-sm"
                 >
                   {a.title}
                 </Link>
@@ -253,7 +253,7 @@ export default async function HomePage() {
 
       {/* Manset Bolumu */}
       {headlines.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-6">
+        <section className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             {/* Sol: buyuk manset (2/3) */}
             <div className="lg:col-span-2">
@@ -279,15 +279,15 @@ export default async function HomePage() {
       )}
 
       {/* Icerik + Sidebar */}
-      <section className="mx-auto max-w-7xl px-4">
+      <section className="mx-auto max-w-7xl px-4 pb-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Sol: Ana Icerik (2/3) */}
           <div className="lg:col-span-2 space-y-8">
             {/* One Cikanlar */}
             {featured.length > 0 && (
               <div>
-                <h2 className="mb-4 text-xl font-bold">Öne Çıkanlar</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <h2 className="mb-4 text-lg font-bold sm:text-xl">Öne Çıkanlar</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {featured.map((f) => (
                     <ArticleCard
                       key={f.id}
@@ -301,7 +301,7 @@ export default async function HomePage() {
 
             {/* Son Haberler */}
             <div>
-              <h2 className="mb-4 text-xl font-bold">Son Haberler</h2>
+              <h2 className="mb-4 text-lg font-bold sm:text-xl">Son Haberler</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {latest.map((l) => (
                   <ArticleCard

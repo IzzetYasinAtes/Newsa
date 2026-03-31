@@ -59,10 +59,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const hasSearched = query.length > 0
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
       {/* Search header */}
-      <div className="mx-auto mb-10 max-w-2xl text-center">
-        <h1 className="mb-4 text-3xl font-bold">Haber Ara</h1>
+      <div className="mx-auto mb-6 max-w-2xl text-center sm:mb-10">
+        <h1 className="mb-4 text-2xl font-bold sm:text-3xl">Haber Ara</h1>
         <SearchForm initialQuery={query} />
       </div>
 

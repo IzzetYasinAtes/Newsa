@@ -204,7 +204,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       {/* Breadcrumb */}
-      <nav className="mb-4 flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+      <nav className="mb-4 flex items-center gap-2 overflow-hidden text-sm text-muted-foreground" aria-label="Breadcrumb">
         <Link href="/" className="hover:text-foreground">Ana Sayfa</Link>
         <span aria-hidden="true">/</span>
         {category && (
@@ -227,10 +227,10 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
           )}
 
           {/* Title */}
-          <h1 className="text-3xl font-bold leading-tight md:text-4xl">{article.title}</h1>
+          <h1 className="text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">{article.title}</h1>
 
           {/* Summary */}
-          {article.summary && <p className="mt-3 text-lg text-muted-foreground">{article.summary}</p>}
+          {article.summary && <p className="mt-3 text-base text-muted-foreground sm:text-lg">{article.summary}</p>}
 
           {/* Author & meta */}
           <div className="mt-4 flex items-center gap-3 border-b pb-4">
@@ -269,7 +269,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
 
           {/* Content */}
           {article.content_html && (
-            <div className="prose prose-lg mt-6 max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: article.content_html }} />
+            <div className="prose prose-base mt-6 max-w-none dark:prose-invert sm:prose-lg" dangerouslySetInnerHTML={{ __html: article.content_html }} />
           )}
 
           {/* In-Article Reklam */}
@@ -310,7 +310,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
           {/* Related articles */}
           {relatedArticles.length > 0 && (
             <section className="mt-10">
-              <h2 className="mb-4 text-xl font-bold">Ilgili Haberler</h2>
+              <h2 className="mb-4 text-lg font-bold sm:text-xl">Ilgili Haberler</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {relatedArticles.map((ra) => (
                   <ArticleCard
@@ -334,7 +334,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
 
         {/* Sidebar — 1/3 */}
         <aside className="lg:w-1/3">
-          <div className="sticky top-4 space-y-6">
+          <div className="sticky top-20 space-y-6">
             {/* Most popular */}
             {popularArticles.length > 0 && (
               <div className="rounded-xl border border-border/50 bg-card p-4">
